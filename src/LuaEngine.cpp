@@ -60,7 +60,7 @@ LuaEngine::ScannerPairShPtr LuaEngine::getArgAsScannerObject(const std::vector<L
 	return *scanner;
 }
 
-bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const ScanVariant::ScanVariantType &type, ScanVariant &output) const
+bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const ScanVariant::ScanVariantType &type, bool allowBlank, ScanVariant &output) const
 {
 
 	switch (variant.getType())
@@ -109,6 +109,33 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 				output = ScanVariant(min, max);
 				return true;
 			}
+
+			if (value.size() == 0 && allowBlank)
+			{
+				if (type < ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN ||
+					type > ScanVariant::SCAN_VARIANT_NUMERICTYPES_END)
+					return false;
+				output = ScanVariant::MakePlaceholder(type);
+				return true;
+			}
+
+			return false;
+		}
+	case LUA_VARIANT_ITABLE:
+		{
+			LuaVariant::LuaVariantITable value;
+			if (!variant.getAsITable(value))
+				return false;
+
+			if (value.size() == 0 && allowBlank)
+			{
+				if (type < ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN ||
+					type > ScanVariant::SCAN_VARIANT_NUMERICTYPES_END)
+					return false;
+				output = ScanVariant::MakePlaceholder(type);
+				return true;
+			}
+
 			return false;
 		}
 	default:

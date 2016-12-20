@@ -45,12 +45,31 @@ ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::
 	new ScanVariantUnderlyingNullTypeTraits()
 };
 
+ScanVariant ScanVariant::MakePlaceholder(ScanVariantType type)
+{
+	ASSERT(type >= SCAN_VARIANT_NUMERICTYPES_BEGIN && type <= SCAN_VARIANT_NUMERICTYPES_END);
+
+	auto offset = type - SCAN_VARIANT_NUMERICTYPES_BEGIN;
+
+	ScanVariant temp;
+	temp.type = SCAN_VARIANT_PLACEHOLDER_BEGIN + offset;
+	temp.setSizeAndValue();
+	return temp;
+}
 
 ScanVariant::ScanVariant(const uint8_t* memory, const ScanVariant &reference)
 {
 	if (reference.isRange())
 	{
 		this->type = reference.valueStruct[0].getType();
+		ASSERT(
+			this->type >= SCAN_VARIANT_ALLTYPES_BEGIN &&
+			this->type <= SCAN_VARIANT_ALLTYPES_END
+		);
+	}
+	else if (reference.isPlaceholder())
+	{
+		this->type = reference.type - SCAN_VARIANT_PLACEHOLDER_BEGIN;
 		ASSERT(
 			this->type >= SCAN_VARIANT_ALLTYPES_BEGIN &&
 			this->type <= SCAN_VARIANT_ALLTYPES_END
@@ -339,7 +358,8 @@ void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) c
 		{
 			CompareTypeFlags flags = 0;
 			this->valueStruct[i].compareTo(&memory[offset], flags);
-			if (!(flags & Scanner::SCAN_COMPARE_EQUALS))
+			if (!(flags & Scanner::SCAN_COMPARE_EQUALS)
+				&& !(flags & Scanner::SCAN_COMPARE_ALWAYS_MATCH))
 			{
 				compType = 0;
 				break;
@@ -363,6 +383,11 @@ void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) c
 			return;
 
 		compType |= Scanner::SCAN_COMPARE_EQUALS;
+		return;
+	}
+	else if (this->isPlaceholder())
+	{
+		compType |= Scanner::SCAN_COMPARE_ALWAYS_MATCH;
 		return;
 	}
 	else

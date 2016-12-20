@@ -232,8 +232,9 @@ int LuaEngine::runScan()
 			if (itValue == valueTable.end()) return this->luaRet(false, std::string("Expected to find '" + memberName + "' in value table!"));
 
 			ScanVariant member;
-			if (!getScanVariantFromLuaVariant(itValue->second, memberType, member))
+			if (!getScanVariantFromLuaVariant(itValue->second, memberType, true, member))
 				return this->luaRet(false, "Unable to handle member type!");
+
 			members.push_back(member);
 		}
 		needle = ScanVariant(members);
@@ -265,7 +266,7 @@ int LuaEngine::runScan()
 		auto it = valueTable.find("value");
 		if (it == valueTable.end()) return this->luaRet(false, "Expected 'value' field!");
 
-		if (!getScanVariantFromLuaVariant(it->second, type, needle))
+		if (!getScanVariantFromLuaVariant(it->second, type, false, needle))
 			return this->luaRet(false, "Unable to handle member type!");
 	}
 

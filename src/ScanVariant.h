@@ -43,11 +43,15 @@ public:
 		SCAN_VARIANT_STRUCTURE,
 		SCAN_VARIANT_NULL, // null is the last type with traits defined
 
-		// Need to make sure we always handle these types special
+		// Need to make sure we always handle these types special (check getTypeTraits() function)
 		SCAN_VARIANT_RANGE_BEGIN,
 		SCAN_VARIANT_RANGE_END = (SCAN_VARIANT_RANGE_BEGIN + (SCAN_VARIANT_NUMERICTYPES_END - SCAN_VARIANT_NUMERICTYPES_BEGIN)),
+
+		SCAN_VARIANT_PLACEHOLDER_BEGIN,
+		SCAN_VARIANT_PLACEHOLDER_END = (SCAN_VARIANT_PLACEHOLDER_BEGIN + (SCAN_VARIANT_NUMERICTYPES_END - SCAN_VARIANT_NUMERICTYPES_BEGIN)),
 	};
 
+	static ScanVariant MakePlaceholder(ScanVariantType type);
 
 	ScanVariant(const uint8_t* memory, const ScanVariant &reference);
 	ScanVariant(const ptrdiff_t &value, const ScanVariantType &type);
@@ -83,6 +87,11 @@ public:
 			auto offset = this->getType() - SCAN_VARIANT_RANGE_BEGIN;
 			return UnderlyingTypeTraits[SCAN_VARIANT_NUMERICTYPES_BEGIN + offset];
 		}
+		else if (this->isPlaceholder())
+		{
+			auto offset = this->getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN;
+			return UnderlyingTypeTraits[SCAN_VARIANT_NUMERICTYPES_BEGIN + offset];
+		}
 		else
 			return UnderlyingTypeTraits[this->getType()];
 	}
@@ -99,6 +108,11 @@ public:
 	inline const bool isRange() const
 	{
 		return (this->type >= SCAN_VARIANT_RANGE_BEGIN && this->type <= SCAN_VARIANT_RANGE_END);
+	}
+
+	inline const bool isPlaceholder() const
+	{
+		return (this->type >= SCAN_VARIANT_PLACEHOLDER_BEGIN && this->type <= SCAN_VARIANT_PLACEHOLDER_END);
 	}
 
 	const bool isNull() const;
