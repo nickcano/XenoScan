@@ -101,7 +101,6 @@ ScanVariant::ScanVariant(const size_t &chunkSize, const uint8_t* memory, const S
 	}
 	else if (this->type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
 	{
-		// TODO: maybe need to check the size of memory?
 		auto sizeInBytes = reference.valueAsciiString.length() * sizeof(std::string::value_type);
 		ASSERT(sizeInBytes <= chunkSize);
 		this->valueAsciiString =
