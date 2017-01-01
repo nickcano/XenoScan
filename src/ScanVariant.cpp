@@ -445,22 +445,22 @@ void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) c
 				{
 				case 1:
 					{
-						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int8_t);
+						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int8_t);
 						break;
 					}
 				case 2:
 					{
-						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int16_t);
+						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int16_t);
 						break;
 					}
 				case 4:
 					{
-						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int32_t);
+						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int32_t);
 						break;
 					}
 				case 8:
 					{
-						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int64_t);
+						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int64_t);
 						break;
 					}
 				default:
