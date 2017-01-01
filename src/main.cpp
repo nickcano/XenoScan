@@ -3,25 +3,34 @@
 #include "LuaEngine.h"
 #include "ScannerTarget.h"
 #include "Scanner.h"
+#include "TestBase.h"
 
 
-int main(int argv, char** argc)
+int main(int argc, char** argv)
 {
 	LuaEngineShPtr eng(new LuaEngine());
 
-	while (true)
+	if (argc == 2 && strcmp(argv[1], "test") == 0)
 	{
-		std::string block = "", input = "";
-		do
+		system("pause");
+		TestBase::runAllTests(eng);
+	}
+	else
+	{
+		while (true)
 		{
-			input = "";
-			std::cout << ">>>";
-			std::getline(std::cin, input);
-			block += input;
-			block += "\n";
-		} while (input != "");
-		std::cout << "Executing block... " << std::endl;
-		eng->doString(block);
+			std::string block = "", input = "";
+			do
+			{
+				input = "";
+				std::cout << ">>>";
+				std::getline(std::cin, input);
+				block += input;
+				block += "\n";
+			} while (input != "");
+			std::cout << "Executing block... " << std::endl;
+			eng->doString(block);
+		}
 	}
 
 

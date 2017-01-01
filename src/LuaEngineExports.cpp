@@ -324,17 +324,11 @@ int LuaEngine::getScanResults()
 			LuaVariant::LuaVariantKTable innerResultType;
 			innerResultType["type"] = LuaVariant(ires->getTypeName());
 
-
-			if (ires->hasComplexRepresentation())
-			{
-				auto complexString = ires->toComplexString();
-				LuaVariant::LuaVariantITable complex;
-				for (auto s = complexString.begin(); s != complexString.end(); s++)
-					complex.push_back(LuaVariant(*s));
-				innerResultType["values"] = complex;
-			}
+			auto res = this->getLuaVariantFromScanVariant(*ires);
+			if (res.isTable())
+				innerResultType["values"] = res;
 			else
-				innerResultType["value"] = LuaVariant(ires->toString());
+				innerResultType["value"] = res;
 
 			innerResults.push_back(innerResultType);
 		}
@@ -363,9 +357,15 @@ int LuaEngine::getDataStructures()
 			dataStructureResult != dataStructureType->second.end();
 			dataStructureResult++)
 		{
-			LuaVariant::LuaVariantITable singleLuaResult;
-			singleLuaResult.push_back(LuaVariant(dataStructureResult->second.rootNode));
-			singleLuaResult.push_back(LuaVariant(dataStructureResult->second.objectCount));
+			LuaVariant::LuaVariantKTable singleLuaResult;
+			singleLuaResult["identifier"] = dataStructureResult->second.identifier;
+			for (auto member = dataStructureResult->second.members.begin();
+				member != dataStructureResult->second.members.end();
+				member++)
+			{
+				singleLuaResult[member->first] = this->getLuaVariantFromScanVariant(member->second);
+			}
+
 			innerLuaResults.push_back(singleLuaResult);
 		}
 		luaResults[dataStructureType->first] = innerLuaResults;

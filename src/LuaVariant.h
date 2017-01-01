@@ -89,6 +89,10 @@ public:
 		}
 		else if (type == LUA_TTABLE)
 		{
+			// if the indexds is in the negative, parsing a table
+			// will put values "above" it, moving it down by 1 negative index
+			if (index < 0) index--;
+
 			static const int32_t KEY_INDEX = -2;
 			static const int32_t VALUE_INDEX = -1;
 			typedef std::function<void(lua_State*)> WalkCallback;
@@ -97,7 +101,7 @@ public:
 			// The table parsing loop is conducted by lua_next(), which:
 			//    - reads a key from the stack
 			//    - read the value of the next key from the table (table index specified by second arg)
-			//    - pushes the key (KEY_INDEX, -2) and value (VALUE_INDEX, -1) to the stack
+			//    - pushes the key (KEY_INDEX) and value (VALUE_INDEX) to the stack
 			//    - returns 0 and pops all extraneous stuff on completion
 			// Starting with a key of nil will allow us to process the entire table.
 			// Leaving the last key on the stack each iteration will go to the next item
@@ -124,14 +128,16 @@ public:
 			// or it might also have string indices (kTable)
 			LuaVariantKTable kTableValue;
 			LuaVariantITable iTableValue;
-			auto parseKTableItem = [parseNumbersAsDouble, &kTableValue](lua_State *L) -> void
+			auto parseKTableItem =
+				[parseNumbersAsDouble, &kTableValue](lua_State *L) -> void
 			{
 				// TODO: probably type-check the key here and have some error handling mechanism
 				std::string key = lua_tostring(L, KEY_INDEX);
 				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
 				kTableValue[key] = LuaVariant::parse(L, valueIndex, parseNumbersAsDouble, false);
 			};
-			auto parseITableItem = [parseNumbersAsDouble, &iTableValue](lua_State *L) -> void
+			auto parseITableItem =
+				[parseNumbersAsDouble, &iTableValue](lua_State *L) -> void
 			{
 				// TODO: probably type-check the key here and have some error handling mechanism
 				auto key = lua_tonumber(L, KEY_INDEX);
@@ -253,6 +259,9 @@ public:
 		}
 	}
 	bool isNil() const { return this->type == LUA_VARIANT_NIL; }
+	bool isArray() const {return this->type == LUA_VARIANT_ITABLE; }
+	bool isDictionary() const {return this->type == LUA_VARIANT_KTABLE; }
+	bool isTable() const {return this->isArray() || this->isDictionary(); }
 
 	bool getAsDouble(LuaVariantDouble &value) const
 	{

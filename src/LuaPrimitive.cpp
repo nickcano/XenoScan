@@ -37,6 +37,7 @@ bool LuaPrimitive::doFile(const std::wstring& file)
 		}
 		else
 			break;
+
 		return true;
 	} while (0);
 
@@ -60,6 +61,13 @@ bool LuaPrimitive::doString(const std::string& block)
 		}
 	}
 	return true;
+}
+
+bool LuaPrimitive::getGlobal(const std::string &name, LuaVariant &var) const
+{
+	lua_getglobal(L, name.c_str());
+	var = LuaVariant::parse(this->L, -1, false, false);
+	return !var.isNil();
 }
 
 void LuaPrimitive::pushLocal(const LuaVariant &var)

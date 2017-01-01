@@ -76,6 +76,7 @@ private:
 	ScannerPairShPtr getArgAsScannerObject(const std::vector<LuaVariant>& args) const;
 
 	bool getScanVariantFromLuaVariant(const LuaVariant &variant, const ScanVariant::ScanVariantType &type, bool allowBlank, ScanVariant &output) const;
+	LuaVariant getLuaVariantFromScanVariant(const ScanVariant &variant) const;
 
 	template<typename T>
 	int internalMemoryRead()

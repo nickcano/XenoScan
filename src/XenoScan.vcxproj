@@ -87,6 +87,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BasicTest.cpp" />
+    <ClCompile Include="TestRunner.cpp" />
     <ClCompile Include="FastAllocator.cpp" />
     <ClCompile Include="LuaEngine.cpp" />
     <ClCompile Include="LuaEngineExports.cpp" />
@@ -97,9 +99,11 @@
     <ClCompile Include="ScannerTargetWindows.cpp" />
     <ClCompile Include="ScanVariant.cpp" />
     <ClCompile Include="ScanVariantTypeTraits.cpp" />
+    <ClCompile Include="TestBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assert.h" />
+    <ClInclude Include="BasicTest.h" />
     <ClInclude Include="FastAllocator.h" />
     <ClInclude Include="LuaEngine.h" />
     <ClInclude Include="LuaPrimitive.h" />
@@ -114,6 +118,7 @@
     <ClInclude Include="ScanState.h" />
     <ClInclude Include="ScanVariant.h" />
     <ClInclude Include="ScanVariantTypeTraits.h" />
+    <ClInclude Include="TestBase.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="lib.lua">
@@ -127,7 +132,26 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <None Include="TypeSystemTest.lua" />
+    <CustomBuild Include="testlib.lua">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying '%(filename)'</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="TypeSystemTest.lua">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying '%(filename)'</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

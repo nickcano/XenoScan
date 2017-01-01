@@ -139,6 +139,27 @@ ScanVariant::ScanVariant(const ScanVariant& min, const ScanVariant& max)
 	this->setSizeAndValue();
 }
 
+ScanVariant::ScanVariant(const MemoryAddress& valueMemoryAddress)
+{
+	if (sizeof(MemoryAddress) == sizeof(uint32_t))
+	{
+		this->valueuint32 = reinterpret_cast<uint32_t>(valueMemoryAddress);
+		this->type = SCAN_VARIANT_UINT32;
+		this->setSizeAndValue();
+	}
+	else if (sizeof(MemoryAddress) == sizeof(uint64_t))
+	{
+		this->valueuint64 = reinterpret_cast<uint64_t>(valueMemoryAddress);
+		this->type = SCAN_VARIANT_UINT64;
+		this->setSizeAndValue();
+	}
+	else
+	{
+		// what went wrong? did we change the MemoryAddress type?
+		ASSERT(false);
+	}
+}
+
 const std::wstring ScanVariant::getTypeName() const
 {
 	return this->getTypeTraits()->getName();

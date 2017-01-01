@@ -4,28 +4,50 @@
 #include <map>
 #include <stack>
 #include <set>
+#include <functional>
 
+#include "Assert.h"
 #include "ScannerTarget.h"
 #include "ScannerTypes.h"
+#include "ScanVariant.h"
 
 struct ScannerDataStructureDetails
 {
-	MemoryAddress rootNode;
-	size_t objectCount;
+	MemoryAddress identifier;
+	std::map<std::string, ScanVariant> members;
 };
 
 typedef std::map<MemoryAddress, std::vector<MemoryAddress>> PointerMap;
 typedef std::map<std::string, std::map<MemoryAddress, ScannerDataStructureDetails>> ScanDataStructureResultMap;
 
+
 class ScannerDataStructureBlueprint
 {
 public:
+	static const std::string ItemCountTag;
+	static const std::string VFTableTag;
+
 	virtual bool walkStructure(
 		const ScannerTargetShPtr &target,
 		const MemoryAddress &startPointer,
 		const PointerMap &pointerMap,
 		ScannerDataStructureDetails& details) const = 0;
 	virtual std::string getTypeName() const = 0;
+
+	virtual inline void findMatches(
+		const ScannerTargetShPtr &target,
+		const PointerMap &pointerMap,
+		ScanDataStructureResultMap& results)
+	{
+		for (auto ptrItr = pointerMap.cbegin(); ptrItr != pointerMap.cend(); ptrItr++)
+		{
+			ScannerDataStructureDetails details;
+			if (this->walkStructure(target, ptrItr->first, pointerMap, details))
+			{
+				results[this->getTypeName()][details.identifier] = details;
+			}
+		}
+	}
 
 	static void findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, ScanDataStructureResultMap& results);
 };
@@ -74,8 +96,8 @@ public:
 						auto size = target->read<size_t>(sizeLocation);
 						if (size == walkedCount)
 						{
-							details.rootNode = *object;
-							details.objectCount = size;
+							details.identifier = *object;
+							details.members[ItemCountTag] = size;
 							return true;
 						}
 					}
@@ -114,14 +136,9 @@ public:
 		const PointerMap &pointerMap,
 		ScannerDataStructureDetails& details) const
 	{
-		if (this->findRootNode(target, startPointer, details.rootNode))
-		{
-			// TODO: fix counting of tree nodes .. fuck
-			// some thoughts:
-			//     - This could be messing up because the process isn't forzen
-			//     - other than that, probably fml
-			
-			return this->countNodes(target, details.rootNode, details.objectCount);
+		if (this->findRootNode(target, startPointer, details))
+		{			
+			return this->countNodes(target, details);
 		}
 
 		return false;
@@ -230,7 +247,7 @@ private:
 		return false;
 	}
 
-	inline bool findRootNode(const ScannerTargetShPtr &target, const MemoryAddress &startPointer, MemoryAddress &root) const
+	inline bool findRootNode(const ScannerTargetShPtr &target, const MemoryAddress &startPointer, ScannerDataStructureDetails& details) const
 	{
 		size_t loops = 0;
 		auto node = startPointer;
@@ -248,7 +265,7 @@ private:
 
 			if (node == nodeGrandParent)
 			{
-				root = nodeParent;
+				details.identifier = nodeParent;
 				return true;
 			}
 
@@ -257,11 +274,11 @@ private:
 		return false;
 	}
 
-	inline bool countNodes(const ScannerTargetShPtr &target, const MemoryAddress &root, size_t &count) const
+	inline bool countNodes(const ScannerTargetShPtr &target, ScannerDataStructureDetails& details) const
 	{
 		std::set<MemoryAddress> searched;
 		std::stack<MemoryAddress> toSearch;
-		toSearch.push(getNodeParent(target, root));
+		toSearch.push(getNodeParent(target, details.identifier));
 		while (toSearch.size() > 0)
 		{
 			auto search = toSearch.top();
@@ -277,13 +294,111 @@ private:
 			toSearch.pop();
 
 			auto left = target->read<MemoryAddress>(search);
-			if (left != root) toSearch.push(left);
+			if (left != details.identifier) toSearch.push(left);
 
 			auto right = target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(search, sizeof(MemoryAddress) * 2));
-			if (right != root) toSearch.push(right);
+			if (right != details.identifier) toSearch.push(right);
 		}
 
-		count = searched.size();
+		details.members[ItemCountTag] = searched.size();
 		return true;
+	}
+};
+
+
+class ClassInstanceBlueprint : public ScannerDataStructureBlueprint
+{
+public:
+	inline virtual bool walkStructure(
+		const ScannerTargetShPtr &target,
+		const MemoryAddress &startPointer,
+		const PointerMap &pointerMap,
+		ScannerDataStructureDetails& details) const
+	{
+		ASSERT(false); // NOT IMPLEMENTED BECAUSE findMatches DOES EVERYTHING
+		return false;
+	}
+
+	virtual inline void findMatches(
+		const ScannerTargetShPtr &target,
+		const PointerMap &pointerMap,
+		ScanDataStructureResultMap& results)
+	{
+		MemoryAddress moduleStart, moduleEnd;
+		if (!target->getMainModuleBounds(moduleStart, moduleEnd))
+			return;
+
+		std::vector<MemoryInformation> executableBlocks, readOnlyBlocks;
+		this->getBlocks(target, moduleStart, moduleEnd, executableBlocks, readOnlyBlocks);
+
+		for (auto ptrItr = pointerMap.cbegin(); ptrItr != pointerMap.cend(); ptrItr++)
+		{
+			// There's a pointer to read only memory, maybe a VF table
+			if (this->isInBlock(readOnlyBlocks, ptrItr->first))
+			{
+				auto pointed = target->read<MemoryAddress>(ptrItr->first);
+
+				// The thing in read-only memory points to executable memory, definitely a VF table
+				if (this->isInBlock(executableBlocks, pointed))
+				{
+					for (auto instance = ptrItr->second.begin(); instance != ptrItr->second.end(); instance++)
+					{
+						auto instanceAddress = *instance;
+						if (instanceAddress < moduleStart ||  instanceAddress > moduleEnd)
+						{
+							ScannerDataStructureDetails details;
+							details.identifier = instanceAddress;
+							details.members[VFTableTag] = ptrItr->first;
+							results[this->getTypeName()][instanceAddress] = details;
+						}
+					}
+				}
+			}
+		}
+
+	}
+
+
+	virtual std::string getTypeName() const
+	{
+		return "Class Instance";
+	}
+
+private:
+	inline bool isInBlock(const std::vector<MemoryInformation> &blocks, const MemoryAddress &adr)
+	{
+		for (auto b = blocks.begin(); b != blocks.end(); b++)
+			if (adr >= b->allocationBase && adr < b->allocationEnd)
+				return true;
+		return false;
+	}
+
+	inline void getBlocks(
+		const ScannerTargetShPtr &target,
+		const MemoryAddress &moduleStart,
+		const MemoryAddress &moduleEnd,
+		std::vector<MemoryInformation> &executableBlocks,
+		std::vector<MemoryInformation> &readOnlyBlocks) const
+	{
+		auto pageSize = target->pageSize();
+
+		// identify all the different blocks in the main module of the target
+		//     E.G. on windows this will be the regions in PE header with
+		//     different protections
+		MemoryAddress nextAddress = moduleStart;
+		while (nextAddress < moduleEnd)
+		{
+			MemoryInformation meminfo;
+			if (target->queryMemory(nextAddress, meminfo) && meminfo.isCommitted)
+			{
+				nextAddress = (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize + pageSize);
+				if (meminfo.isExecutable)
+					executableBlocks.push_back(meminfo);
+				else if (!meminfo.isWriteable)
+					readOnlyBlocks.push_back(meminfo);
+			}
+			else
+				nextAddress = (MemoryAddress)((size_t)nextAddress + pageSize);
+		}
 	}
 };

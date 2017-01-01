@@ -56,6 +56,7 @@ public:
 	ScanVariant(const uint8_t* memory, const ScanVariant &reference);
 	ScanVariant(const ptrdiff_t &value, const ScanVariantType &type);
 	ScanVariant(const ScanVariant& min, const ScanVariant& max);
+	ScanVariant(const MemoryAddress& valueMemoryAddress);
 	ScanVariant(std::string valueAsciiString)                   : valueAsciiString(valueAsciiString),     type(SCAN_VARIANT_ASCII_STRING) { setSizeAndValue(); }
 	ScanVariant(std::wstring valueWideString)                   : valueWideString(valueWideString),       type(SCAN_VARIANT_WIDE_STRING) { setSizeAndValue(); }
 	ScanVariant(uint8_t valueuint8)                             : valueuint8(valueuint8),                 type(SCAN_VARIANT_UINT8) { setSizeAndValue(); }

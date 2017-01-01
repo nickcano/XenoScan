@@ -142,3 +142,17 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 		return false;
 	}
 }
+
+LuaVariant LuaEngine::getLuaVariantFromScanVariant(const ScanVariant &variant) const
+{
+	if (variant.hasComplexRepresentation())
+	{
+		auto complexString = variant.toComplexString();
+		LuaVariant::LuaVariantITable complex;
+		for (auto s = complexString.begin(); s != complexString.end(); s++)
+			complex.push_back(LuaVariant(*s));
+		return complex;
+	}
+	else
+		return LuaVariant(variant.toString());
+}

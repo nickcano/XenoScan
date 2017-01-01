@@ -25,6 +25,8 @@ public:
 	bool doFile(const std::wstring& file);
 	bool doString(const std::string& block);
 
+	bool getGlobal(const std::string &name, LuaVariant &var) const;
+
 	template<class CONTAINER_TYPE>
 	static CONTAINER_TYPE* getInstance(lua_State* L)
 	{
