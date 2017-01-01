@@ -26,6 +26,7 @@ public:
 	bool doString(const std::string& block);
 
 	bool getGlobal(const std::string &name, LuaVariant &var) const;
+	void pushGlobal(const std::string &name, const LuaVariant &var);
 
 	template<class CONTAINER_TYPE>
 	static CONTAINER_TYPE* getInstance(lua_State* L)
@@ -43,7 +44,6 @@ protected:
 	lua_State *L;
 
 	void pushLocal(const LuaVariant &var);
-	void pushGlobal(const std::string &name, const LuaVariant &var);
 	bool executeFunction(std::string name, std::vector<LuaVariant> arguments, int32_t returns);
 
 	int luaRet();

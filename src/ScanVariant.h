@@ -53,7 +53,7 @@ public:
 
 	static ScanVariant MakePlaceholder(ScanVariantType type);
 
-	ScanVariant(const uint8_t* memory, const ScanVariant &reference);
+	ScanVariant(const size_t &chunkSize, const uint8_t* memory, const ScanVariant &reference);
 	ScanVariant(const ptrdiff_t &value, const ScanVariantType &type);
 	ScanVariant(const ScanVariant& min, const ScanVariant& max);
 	ScanVariant(const MemoryAddress& valueMemoryAddress);

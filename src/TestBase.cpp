@@ -47,6 +47,8 @@ bool TestBase::completeTest(const LuaEngineShPtr &engine)
 
 void TestBase::runAllTests(const LuaEngineShPtr &engine)
 {
+	engine->doFile(L"testlib.lua");
+
 	size_t failures = 0;
 	for (auto t = TestBase::tests.begin(); t != TestBase::tests.end(); t++)
 	{

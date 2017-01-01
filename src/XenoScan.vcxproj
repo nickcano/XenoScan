@@ -88,6 +88,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BasicTest.cpp" />
+    <ClCompile Include="ScannerTest.cpp" />
     <ClCompile Include="TestRunner.cpp" />
     <ClCompile Include="FastAllocator.cpp" />
     <ClCompile Include="LuaEngine.cpp" />
@@ -113,6 +114,7 @@
     <ClInclude Include="ScannerDataStructureBlueprint.h" />
     <ClInclude Include="ScannerTarget.h" />
     <ClInclude Include="ScannerTargetWindows.h" />
+    <ClInclude Include="ScannerTest.h" />
     <ClInclude Include="ScannerTypes.h" />
     <ClInclude Include="ScanResult.h" />
     <ClInclude Include="ScanState.h" />
@@ -144,6 +146,17 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="TypeSystemTest.lua">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying '%(filename)'</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="ScannerTest.lua">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>

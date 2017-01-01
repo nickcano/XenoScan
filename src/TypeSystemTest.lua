@@ -1,5 +1,3 @@
-dofile("testlib.lua")
-
 tests.reset()
 
 a = range(1, 100)

@@ -57,7 +57,7 @@ ScanVariant ScanVariant::MakePlaceholder(ScanVariantType type)
 	return temp;
 }
 
-ScanVariant::ScanVariant(const uint8_t* memory, const ScanVariant &reference)
+ScanVariant::ScanVariant(const size_t &chunkSize, const uint8_t* memory, const ScanVariant &reference)
 {
 	if (reference.isRange())
 	{
@@ -91,7 +91,9 @@ ScanVariant::ScanVariant(const uint8_t* memory, const ScanVariant &reference)
 		size_t offset = 0;
 		for (auto member = reference.valueStruct.begin(); member != reference.valueStruct.end(); member++)
 		{
-			ScanVariant temp(&memory[offset], *member);
+			ASSERT(offset + member->getSize() <= chunkSize);
+
+			ScanVariant temp(chunkSize - offset, &memory[offset], *member);
 			this->valueStruct.push_back(temp);
 			offset += member->getSize();
 		}
@@ -99,15 +101,29 @@ ScanVariant::ScanVariant(const uint8_t* memory, const ScanVariant &reference)
 	}
 	else if (this->type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
 	{
-		ASSERT(false); // TODO: implement
+		// TODO: maybe need to check the size of memory?
+		auto sizeInBytes = reference.valueAsciiString.length() * sizeof(std::string::value_type);
+		ASSERT(sizeInBytes <= chunkSize);
+		this->valueAsciiString =
+			std::string(
+				(std::string::value_type*)memory,
+				(std::string::value_type*)&memory[sizeInBytes]
+			);
 	}
 	else if (this->type == ScanVariant::SCAN_VARIANT_WIDE_STRING)
 	{
-		ASSERT(false); // TODO: implement
+		auto sizeInBytes = reference.valueWideString.length() * sizeof(std::wstring::value_type);
+		ASSERT(sizeInBytes <= chunkSize);
+		this->valueWideString =
+			std::wstring(
+				(std::wstring::value_type*)memory,
+				(std::wstring::value_type*)&memory[sizeInBytes]
+			);
 	}
 	else
 	{
 		auto size = this->getTypeTraits()->getSize();
+		ASSERT(size <= chunkSize);
 		memcpy(&this->numericValue, &memory[0], size);
 	}
 

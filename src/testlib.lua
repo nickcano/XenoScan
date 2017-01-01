@@ -17,6 +17,9 @@ tests.assertEqual = function(a, b, messgae)
 	tests.assert(ttest(a, b), messgae)
 end
 
+tests.assertNotNil = function(a, messgae)
+	tests.assert(a ~= nil, messgae)
+end
 
 tests.assert = function(value, message)
 	TEST_STATUS = value

@@ -33,6 +33,9 @@
     <Filter Include="Lua\Tests">
       <UniqueIdentifier>{ca9f4fb2-5b39-4452-8d85-7923badce963}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lua\Libs">
+      <UniqueIdentifier>{41619fca-2d7d-4ef7-8c4a-c5b488540d06}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -72,6 +75,9 @@
       <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="TestRunner.cpp">
+      <Filter>Source Files\Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ScannerTest.cpp">
       <Filter>Source Files\Tests</Filter>
     </ClCompile>
   </ItemGroup>
@@ -127,15 +133,21 @@
     <ClInclude Include="BasicTest.h">
       <Filter>Header Files\Tests</Filter>
     </ClInclude>
+    <ClInclude Include="ScannerTest.h">
+      <Filter>Header Files\Tests</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="lib.lua">
+    <CustomBuild Include="TypeSystemTest.lua">
       <Filter>Lua\Tests</Filter>
     </CustomBuild>
     <CustomBuild Include="testlib.lua">
-      <Filter>Lua\Tests</Filter>
+      <Filter>Lua\Libs</Filter>
     </CustomBuild>
-    <CustomBuild Include="TypeSystemTest.lua">
+    <CustomBuild Include="lib.lua">
+      <Filter>Lua\Libs</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ScannerTest.lua">
       <Filter>Lua\Tests</Filter>
     </CustomBuild>
   </ItemGroup>

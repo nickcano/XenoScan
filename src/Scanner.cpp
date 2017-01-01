@@ -174,7 +174,7 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 				if (found == results.end())
 				{
 					ScanResultCollection temp;
-					temp.push_back(ScanVariant(&chunk[*loc], *needle));
+					temp.push_back(ScanVariant(chunkSize - *loc, &chunk[*loc], *needle));
 					results.emplace(std::make_pair(resultLoc, temp));
 				}
 				else

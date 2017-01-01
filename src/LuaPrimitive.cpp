@@ -70,12 +70,6 @@ bool LuaPrimitive::getGlobal(const std::string &name, LuaVariant &var) const
 	return !var.isNil();
 }
 
-void LuaPrimitive::pushLocal(const LuaVariant &var)
-{
-	if (!var.isNil())
-		var.push(this->L);
-}
-
 void LuaPrimitive::pushGlobal(const std::string &name, const LuaVariant &var)
 {
 	if (!var.isNil())
@@ -83,6 +77,12 @@ void LuaPrimitive::pushGlobal(const std::string &name, const LuaVariant &var)
 		var.push(this->L);
 		lua_setglobal(this->L, name.c_str());
 	}
+}
+
+void LuaPrimitive::pushLocal(const LuaVariant &var)
+{
+	if (!var.isNil())
+		var.push(this->L);
 }
 
 bool LuaPrimitive::executeFunction(std::string name, std::vector<LuaVariant> arguments, int32_t returns)
