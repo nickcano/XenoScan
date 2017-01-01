@@ -335,6 +335,9 @@ const bool ScanVariant::getValue(std::vector<ScanVariant> &value) const
 
 void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) const
 {
+	// this is really messy, but we do it this way
+	// to ensure there's no extra indirection
+	// since speed is very important
 #define COMPARISON_SET_VALUES1(res) \
 	if (res == 0) { compType |= Scanner::SCAN_COMPARE_EQUALS; } \
 	else if (res > 0) { compType |= Scanner::SCAN_COMPARE_GREATER_THAN; }\
@@ -342,6 +345,11 @@ void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) c
 #define COMPARISON_SET_VALUES2(a, b) \
 	if (a == b) { compType |= Scanner::SCAN_COMPARE_EQUALS; } \
 	else if (a > b) { compType |= Scanner::SCAN_COMPARE_GREATER_THAN; } \
+	else { compType |= Scanner::SCAN_COMPARE_LESS_THAN;} 
+#define COMPARISON_SET_VALUES3(a, b, T) \
+	T at, bt; at = *(T*)a; bt = *(T*)b; \
+	if (at == bt) { compType |= Scanner::SCAN_COMPARE_EQUALS; } \
+	else if (at > bt) { compType |= Scanner::SCAN_COMPARE_GREATER_THAN; } \
 	else { compType |= Scanner::SCAN_COMPARE_LESS_THAN;} 
 
 	if (this->type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
@@ -433,28 +441,31 @@ void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) c
 		{
 			if (traits->isSignedNumericType())
 			{
-				// TODO: this is wrong, signed comparison needs to be more robust
-				int8_t data[8];
-				memcpy(&data[0], memory, this->valueSize);
-
-				auto thatRightByte = data[this->valueSize - 1];
-				bool thatNegative = thatRightByte < 0;
-
-				auto thisRightBye = ((int8_t*)&this->numericValue)[this->valueSize - 1];
-				bool thisNegative = thisRightBye < 0;
-				int res = 0;
-				if (thatNegative == thisNegative)
+				switch (this->valueSize)
 				{
-					if (thatNegative)
-						res = memcmp(&this->numericValue, memory, this->valueSize);
-					else
-						res = memcmp(memory, &this->numericValue, this->valueSize);
+				case 1:
+					{
+						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int8_t);
+						break;
+					}
+				case 2:
+					{
+						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int16_t);
+						break;
+					}
+				case 4:
+					{
+						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int32_t);
+						break;
+					}
+				case 8:
+					{
+						COMPARISON_SET_VALUES3(this->numericValue, memory[0], int64_t);
+						break;
+					}
+				default:
+					ASSERT(false);
 				}
-				else if (thatNegative)
-					res = -1;
-				else
-					res = 1;
-				COMPARISON_SET_VALUES1(res);
 			}
 			else if (traits->isUnsignedNumericType())
 			{
@@ -467,6 +478,7 @@ void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) c
 
 #undef COMPARISON_SET_VALUES1
 #undef COMPARISON_SET_VALUES2
+#undef COMPARISON_SET_VALUES3
 }
 
 void ScanVariant::searchForMatchesInChunk(
