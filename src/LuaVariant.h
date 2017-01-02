@@ -35,7 +35,7 @@ public:
 	typedef bool LuaVariantBool;
 	typedef lua_CFunction LuaVariantFunction;
 	typedef std::vector<LuaVariant> LuaVariantITable;
-	typedef std::map<std::string, LuaVariant> LuaVariantKTable;
+	typedef std::map<LuaVariant, LuaVariant> LuaVariantKTable;
 
 	static const char* typeToString(uint32_t type)
 	{
@@ -185,6 +185,8 @@ public:
 	LuaVariant(const LuaVariantITable &valueITable)     : valueITable(valueITable),                                 type(LUA_VARIANT_ITABLE) { };
 	LuaVariant(const LuaVariantKTable &valueKTable)     : valueKTable(valueKTable),                                 type(LUA_VARIANT_KTABLE) { };
 	LuaVariant(const std::wstring &valueWString)        : valueString(valueWString.begin(), valueWString.end()),    type(LUA_VARIANT_STRING) { };
+	LuaVariant(const char* valueString)                 : valueString(valueString),                                 type(LUA_VARIANT_STRING) { };
+	LuaVariant(char* valueString)                       : valueString(valueString),                                 type(LUA_VARIANT_STRING) { };
 	~LuaVariant() {}
 
 	void coerceToPointer()
@@ -237,7 +239,7 @@ public:
 
 				for (size_t i = 0; i < this->valueITable.size(); i++)
 				{
-					lua_pushinteger(L, i); // key
+					lua_pushinteger(L, i+1); // key
 					this->valueITable[i].push(L); // value
 					lua_settable(L, table); // add to table
 				}
@@ -250,7 +252,7 @@ public:
 
 				for (auto obj = this->valueKTable.begin(); obj != this->valueKTable.end(); obj++)
 				{
-					lua_pushstring(L, obj->first.c_str()); // key
+					obj->first.push(L);
 					obj->second.push(L); // value
 					lua_settable(L, table); // add to table
 				}
@@ -355,6 +357,31 @@ public:
 	}
 
 	uint32_t getType() const { return this->type; }
+
+
+	bool operator<(const LuaVariant &other) const
+	{
+#define COMPARISON_SWITCH(TYPE, member) case TYPE: { return (this->member > other.member); }
+		if (this->type != other.type)
+			return (this->type < other.type);
+		else
+		{
+			switch (this->type)
+			{
+				COMPARISON_SWITCH(LUA_VARIANT_DOUBLE, valueDouble);
+				COMPARISON_SWITCH(LUA_VARIANT_INT, valueInt);
+				COMPARISON_SWITCH(LUA_VARIANT_POINTER, valuePointer);
+				COMPARISON_SWITCH(LUA_VARIANT_STRING, valueString);
+				COMPARISON_SWITCH(LUA_VARIANT_BOOL, valueBool);
+				COMPARISON_SWITCH(LUA_VARIANT_FUNCTION, valueFunction);
+				COMPARISON_SWITCH(LUA_VARIANT_ITABLE, valueITable);
+				COMPARISON_SWITCH(LUA_VARIANT_KTABLE, valueKTable);
+			}
+		}
+		// TODO: if this happens we're in trouble
+		return false;
+#undef COMPARISON_SWITCH
+	}
 private:
 	uint32_t type;
 	LuaVariantDouble valueDouble;

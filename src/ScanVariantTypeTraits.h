@@ -14,6 +14,7 @@ public:
 	virtual const bool isNumericType() const = 0;
 	virtual const bool isSignedNumericType() const = 0;
 	virtual const bool isUnsignedNumericType() const = 0;
+	virtual const bool isFloatingPointNumericType() const = 0;
 	virtual const bool isStructureType() const = 0;
 	virtual const std::wstring toString(void* data) const = 0;
 	virtual void fromString(const std::wstring& input, ScanVariant& output) const = 0;
@@ -22,7 +23,7 @@ public:
 template<typename T> struct alignment_trick { char c; T member; };
 #define ALIGNOF(type) offsetof (alignment_trick<type>, member)
 
-template <typename TYPE, bool UNSIGNED>
+template <typename TYPE, bool UNSIGNED, bool FLOATING>
 class ScanVariantUnderlyingNumericTypeTraits : public ScanVariantUnderlyingTypeTraits
 {
 public:
@@ -40,6 +41,7 @@ public:
 	inline virtual const bool isNumericType() const { return true; }
 	inline virtual const bool isSignedNumericType() const { return !UNSIGNED; }
 	inline virtual const bool isUnsignedNumericType() const { return UNSIGNED; }
+	inline virtual const bool isFloatingPointNumericType() const { return FLOATING; }
 	inline virtual const bool isStructureType() const { return false; }
 	inline virtual const std::wstring toString(void* data) const
 	{
@@ -70,6 +72,7 @@ public:
 	inline virtual const bool isNumericType() const { return false; }
 	inline virtual const bool isSignedNumericType() const { return false; }
 	inline virtual const bool isUnsignedNumericType() const { return false; }
+	inline virtual const bool isFloatingPointNumericType() const { return false; }
 	inline virtual const bool isStructureType() const { return false; }
 	inline virtual const std::wstring toString(void* data) const
 	{
@@ -93,6 +96,7 @@ public:
 	inline virtual const bool isNumericType() const { return false; }
 	inline virtual const bool isSignedNumericType() const { return false; }
 	inline virtual const bool isUnsignedNumericType() const { return false; }
+	inline virtual const bool isFloatingPointNumericType() const { return false; }
 	inline virtual const bool isStructureType() const { return false; }
 	inline virtual const std::wstring toString(void* data) const
 	{
@@ -115,6 +119,7 @@ public:
 	inline virtual const bool isNumericType() const { return false; }
 	inline virtual const bool isSignedNumericType() const { return false; }
 	inline virtual const bool isUnsignedNumericType() const { return false; }
+	inline virtual const bool isFloatingPointNumericType() const { return false; }
 	inline virtual const bool isStructureType() const { return true; }
 	inline virtual const std::wstring toString(void* data) const
 	{
@@ -137,6 +142,7 @@ public:
 	inline virtual const bool isNumericType() const { return false; }
 	inline virtual const bool isSignedNumericType() const { return false; }
 	inline virtual const bool isUnsignedNumericType() const { return false; }
+	inline virtual const bool isFloatingPointNumericType() const { return false; }
 	inline virtual const bool isStructureType() const { return false; }
 	inline virtual const std::wstring toString(void* data) const
 	{

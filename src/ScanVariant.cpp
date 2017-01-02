@@ -6,8 +6,8 @@
 	of ScanVariant. This cannot be in it's own .cpp file because templated member function
 	declarations are only visible in the .cpp file in which they are declared.
 */
-template <typename TYPE, bool UNSIGNED>
-void ScanVariantUnderlyingNumericTypeTraits<TYPE, UNSIGNED>::fromString(const std::wstring& input, ScanVariant& output) const
+template <typename TYPE, bool UNSIGNED, bool FLOATING>
+void ScanVariantUnderlyingNumericTypeTraits<TYPE, UNSIGNED, FLOATING>::fromString(const std::wstring& input, ScanVariant& output) const
 {
 	TYPE value;
 	uint8_t buffer[sizeof(int64_t)];
@@ -25,20 +25,20 @@ ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::
 	new ScanVariantUnderlyingAsciiStringTypeTraits(),
 	new ScanVariantUnderlyingWideStringTypeTraits(),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint8_t, true>(L"uint8", L"%u"),
-	new ScanVariantUnderlyingNumericTypeTraits<int8_t, false>(L"int8", L"%d"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint8_t, true, false>(L"uint8", L"%u"),
+	new ScanVariantUnderlyingNumericTypeTraits<int8_t, false, false>(L"int8", L"%d"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint16_t, true>(L"uint16", L"%u"),
-	new ScanVariantUnderlyingNumericTypeTraits<int16_t, false>(L"int16", L"%d"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint16_t, true, false>(L"uint16", L"%u"),
+	new ScanVariantUnderlyingNumericTypeTraits<int16_t, false, false>(L"int16", L"%d"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint32_t, true>(L"uint32", L"%u"),
-	new ScanVariantUnderlyingNumericTypeTraits<int32_t, false>(L"int32", L"%d"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint32_t, true, false>(L"uint32", L"%u"),
+	new ScanVariantUnderlyingNumericTypeTraits<int32_t, false, false>(L"int32", L"%d"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint64_t, true>(L"uint64", L"%llu"),
-	new ScanVariantUnderlyingNumericTypeTraits<int64_t, false>(L"int64", L"%lld"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint64_t, true, false>(L"uint64", L"%llu"),
+	new ScanVariantUnderlyingNumericTypeTraits<int64_t, false, false>(L"int64", L"%lld"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<double, true>(L"double", L"%f"),
-	new ScanVariantUnderlyingNumericTypeTraits<float, true>(L"float", L"%f"),
+	new ScanVariantUnderlyingNumericTypeTraits<double, true, true>(L"double", L"%f"),
+	new ScanVariantUnderlyingNumericTypeTraits<float, true, true>(L"float", L"%f"),
 
 	new ScanVariantUnderlyingStructureTypeTraits(),
 
@@ -180,9 +180,13 @@ const std::wstring ScanVariant::getTypeName() const
 	return this->getTypeTraits()->getName();
 }
 
-const bool ScanVariant::hasComplexRepresentation() const
+const bool ScanVariant::isComposite() const
 {
 	return this->getTypeTraits()->isStructureType();
+}
+const std::vector<ScanVariant>& ScanVariant::getCompositeValues() const
+{
+	return this->valueStruct;
 }
 
 const std::wstring ScanVariant::toString() const
@@ -199,14 +203,6 @@ const std::wstring ScanVariant::toString() const
 	}
 
 	return traits->toString(nullptr);
-}
-
-const std::vector<std::wstring> ScanVariant::toComplexString() const
-{
-	std::vector<std::wstring> ret;
-	for (auto member = this->valueStruct.begin(); member != this->valueStruct.end(); member++)
-		ret.push_back(member->toString());
-	return ret;
 }
 
 const bool ScanVariant::isNull() const

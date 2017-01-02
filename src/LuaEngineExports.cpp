@@ -332,7 +332,10 @@ int LuaEngine::getScanResults()
 
 			innerResults.push_back(innerResultType);
 		}
-		results[res->first->toString()] = innerResults;
+
+		auto key = this->getLuaVariantFromScanVariant(res->first->toVariant());
+		key.coerceToPointer();
+		results[key] = innerResults;
 	}
 
 	return this->luaRet(results);

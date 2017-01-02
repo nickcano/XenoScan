@@ -1,19 +1,25 @@
 tests.reset()
 
 --------------- TEST STRINGS ---------------
-function findStringResults(value)
+function findStringResults(totype, value, expected)
 	local proc = Process(TEST_PID)
 	proc:newScan()
-	proc:scanFor(value)
+	proc:scanFor(totype(value))
 	local results = proc:getResults()
 	proc:destroy()
 
-	return #results >= 2
+	return results[expected]
 end
 
-tests.assert(findStringResults(ascii(TEST_STRING1)), "Failed to locate char[32]!")
-tests.assert(findStringResults(ascii(TEST_STRING2)), "Failed to locate std::string!")
-tests.assert(findStringResults(widestring(TEST_STRING3)), "Failed to locate std::wstring!")
+string1 = findStringResults(ascii, TEST_STRING1, TEST_STRING1_ADDRESS)
+tests.assertNotNil(string1, "Failed to locate char[32]!")
+
+string2 = findStringResults(ascii, TEST_STRING2, TEST_STRING2_ADDRESS)
+tests.assertNotNil(string2, "Failed to locate std::string!")
+
+string3 = findStringResults(widestring, TEST_STRING3, TEST_STRING3_ADDRESS)
+tests.assertNotNil(string3, "Failed to locate std::wstring!")
+
 
 
 --------------- TEST STRUCTURE (COMMON) ---------------
@@ -34,13 +40,7 @@ function findStructureResults()
 	local results = proc:getResults()
 	proc:destroy()
 
-	local addressToFind = string.sub(tostring(TEST_STRUCT_ADDRESS), 11)
-	for key, value in pairs(results) do
-		if (string.ends(key, addressToFind)) then
-			return true
-		end
-	end
-	return false
+	return results[TEST_STRUCT_ADDRESS]
 end
 
 --------------- TEST STRUCTURE (STATIC) ---------------
@@ -52,7 +52,7 @@ testStruct["five"] = TEST_STRUCT_FIVE
 testStruct["six"] = TEST_STRUCT_SIX
 testStruct["seven"] = TEST_STRUCT_SEVEN
 
-tests.assert(findStructureResults(), "Failed to locate test structure (static)!")
+tests.assertNotNil(findStructureResults(), "Failed to locate test structure (static)!")
 
 --------------- TEST STRUCTURE (RANGES) ---------------
 testStruct["one"] = range(TEST_STRUCT_ONE - 5, TEST_STRUCT_ONE + 5)
@@ -63,4 +63,4 @@ testStruct["five"] = TEST_STRUCT_FIVE
 testStruct["six"] = {}
 testStruct["seven"] = range(TEST_STRUCT_SEVEN - 1, TEST_STRUCT_SEVEN + 1)
 
-tests.assert(findStructureResults(), "Failed to locate test structure (ranges)!")
+tests.assertNotNil(findStructureResults(), "Failed to locate test structure (ranges)!")

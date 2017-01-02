@@ -21,6 +21,10 @@ bool ScannerTest::runTest(const LuaEngineShPtr &engine)
 	engine->pushGlobal("TEST_STRING2", this->string2);
 	engine->pushGlobal("TEST_STRING3", this->string3);
 
+	engine->pushGlobal("TEST_STRING1_ADDRESS", &this->string1);
+	engine->pushGlobal("TEST_STRING2_ADDRESS", (void*)this->string2.data());
+	engine->pushGlobal("TEST_STRING3_ADDRESS", (void*)this->string3.data());
+
 	// structure stuff
 	this->testStruct.one = 999;
 	this->testStruct.two = 1234;

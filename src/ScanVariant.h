@@ -98,9 +98,10 @@ public:
 	}
 
 	const std::wstring getTypeName() const;
-	const bool hasComplexRepresentation() const;
 	const std::wstring toString() const;
-	const std::vector<std::wstring> toComplexString() const;
+
+	const bool isComposite() const;
+	const std::vector<ScanVariant>& getCompositeValues() const;
 
 	inline const bool isStructure() const
 	{

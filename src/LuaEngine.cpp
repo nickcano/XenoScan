@@ -145,14 +145,53 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 
 LuaVariant LuaEngine::getLuaVariantFromScanVariant(const ScanVariant &variant) const
 {
-	if (variant.hasComplexRepresentation())
+	// this isn't exactly clean, but we do it to keep the code
+	// as fast as possible without too much duplication pre-compilation
+#define TYPE_TO_LUA_VARIANT(VAR_TYPE, RAW_TYPE) \
+	case ScanVariant::VAR_TYPE: \
+	{ \
+		RAW_TYPE value; \
+		if (variant.getValue(value)) \
+			return LuaVariant(value); \
+		break; \
+	}
+
+
+	auto traits = variant.getTypeTraits();
+	if (variant.isComposite())
 	{
-		auto complexString = variant.toComplexString();
+		auto values = variant.getCompositeValues();
 		LuaVariant::LuaVariantITable complex;
-		for (auto s = complexString.begin(); s != complexString.end(); s++)
-			complex.push_back(LuaVariant(*s));
+		for (auto v = values.begin(); v != values.end(); v++)
+			complex.push_back(this->getLuaVariantFromScanVariant(*v));
 		return complex;
 	}
-	else
+	else if (traits->isStringType())
+	{
 		return LuaVariant(variant.toString());
+	}
+	else if (traits->isNumericType())
+	{
+		switch (variant.getType())
+		{
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_DOUBLE, double);
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_FLOAT, float);
+
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_INT8, int8_t);
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_UINT8, uint8_t);
+
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_INT16, int16_t);
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_UINT16, uint16_t);
+
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_INT32, int32_t);
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_UINT32, uint32_t);
+
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_INT64, int64_t);
+			TYPE_TO_LUA_VARIANT(SCAN_VARIANT_UINT64, uint64_t);
+		}
+	}
+
+	return LuaVariant();
+
+#undef TYPE_TO_LUA_VARIANT
 }

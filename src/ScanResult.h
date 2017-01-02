@@ -19,6 +19,7 @@ public:
 
 	virtual std::string toString() const = 0;
 	virtual bool readCurrentValue(const ScannerTargetShPtr &target, uint8_t* buffer, const size_t &size) const = 0;
+	virtual ScanVariant toVariant() const = 0;
 };
 typedef std::shared_ptr<ScanResultLocation> ScanResultLocationShPtr;
 
@@ -36,13 +37,16 @@ public:
 	inline virtual std::string toString() const
 	{
 		return asString;
-		char result[100];
-		sprintf_s<100>(result, "0x%p", this->adr);
 	}
 
 	inline virtual bool readCurrentValue(const ScannerTargetShPtr &target, uint8_t* buffer, const size_t &size) const
 	{
 		return target->readArray<uint8_t>(this->adr, size, buffer);
+	}
+
+	virtual ScanVariant toVariant() const
+	{
+		return ScanVariant(this->adr);
 	}
 
 private:
