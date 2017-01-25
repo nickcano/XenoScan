@@ -64,6 +64,16 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 
 	mainModuleEnd = (MemoryAddress)((size_t)mainModuleStart + moduleInfo.SizeOfImage);
 
+	// find the system info
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+
+	static_assert(sizeof(this->_highestAddress) == sizeof(sysinfo.lpMaximumApplicationAddress), "Expected SYSTEM_INFO structure to have addresses the same size as scanner's MemoryAddress type");
+
+	this->_pageSize = static_cast<size_t>(sysinfo.dwPageSize);
+	this->_highestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMaximumApplicationAddress);
+	this->_lowestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMinimumApplicationAddress);
+
 	// we good!
 	return true;
 }
@@ -75,18 +85,15 @@ bool ScannerTargetWindows::isAttached() const
 
 MemoryAddress ScannerTargetWindows::lowestAddress() const
 {
-	//TODO: be smarter
-	return reinterpret_cast<MemoryAddress>(0x0);
+	return this->_lowestAddress;
 }
 MemoryAddress ScannerTargetWindows::highestAddress() const
 {
-	//TODO: be smarter
-	return reinterpret_cast<MemoryAddress>(0x07FFFFFF);
+	return this->_highestAddress;
 }
 size_t ScannerTargetWindows::pageSize() const
 {
-	//TODO: get from system
-	return 0x1000;
+	return this->_pageSize;
 }
 size_t ScannerTargetWindows::chunkSize() const
 {

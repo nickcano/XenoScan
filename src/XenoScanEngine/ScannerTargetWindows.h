@@ -23,6 +23,8 @@ public:
 private:
 	ProcessHandle processHandle;
 	MemoryAddress mainModuleStart, mainModuleEnd;
+	MemoryAddress _lowestAddress, _highestAddress;
+	size_t _pageSize;
 	virtual bool read(const MemoryAddress &adr, const size_t objectSize, void* result) const;
 
 	MemoryAddress getMainModuleBaseAddress() const;
