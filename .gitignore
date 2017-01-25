@@ -1,0 +1,11 @@
+bin/*
+/bin/
+ipch/*
+/ipch/
+tempfiles/*
+/tempfiles/
+*.exe
+*.opensdf
+*.suo
+*.sdf
+*.vcxproj.user
