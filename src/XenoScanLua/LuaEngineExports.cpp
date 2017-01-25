@@ -1,8 +1,9 @@
 #include "LuaEngine.h"
-#include "LuaVariant.h"
-#include "ScannerTarget.h"
-#include "ScanVariant.h"
-#include "Scanner.h"
+
+#include <LuaVariant.h>
+#include <ScannerTarget.h>
+#include <ScanVariant.h>
+#include <Scanner.h>
 
 std::vector<std::pair<std::string, LuaVariant>> __luaEngineExports;
 

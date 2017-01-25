@@ -3,9 +3,10 @@
 #include <list>
 #include <iostream>
 
-#include "LuaPrimitive.h"
-#include "ScannerTarget.h"
-#include "Scanner.h"
+#include <LuaPrimitive.h>
+
+#include <ScannerTarget.h>
+#include <Scanner.h>
 
 
 #define LUAENGINE_EXPORT_VALUE(type, name, val) __LuaEngineExporter __exporter ## name (#name, (type)val);
