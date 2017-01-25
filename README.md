@@ -14,6 +14,8 @@ XenoScan is written in C++ with a Lua frontend, and I've been working on advance
 ### XenoScanLua
 *XenoScanLua* ties *XenoScanEngine* to *XenoLua* to provide a Lua-scriptable frontend for the scanner. Currently, this is the only entry-point to the scanner.
 
+Additionally, this project contains some test code that ensures everything is working properly. A test is a combination of a '.cpp', a '.h', and a '.lua' file. For examples on how to use the scanner, you can check out the `.lua` test files.
+
 ## Compiling
 The XenoScan project files are currently for the Visual Studio 2010 IDE. You should be able to compile the code with newer versions of Visual Studio, however.
 
