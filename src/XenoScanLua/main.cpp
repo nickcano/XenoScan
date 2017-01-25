@@ -1,9 +1,10 @@
 #include <iostream>
 
 #include "LuaEngine.h"
-#include "ScannerTarget.h"
-#include "Scanner.h"
 #include "TestBase.h"
+
+#include <ScannerTarget.h>
+#include <Scanner.h>
 
 
 int main(int argc, char** argv)

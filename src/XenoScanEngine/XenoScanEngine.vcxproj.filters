@@ -9,46 +9,16 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Header Files\Lua">
-      <UniqueIdentifier>{b7283eae-11b9-4777-b756-65b213a5119d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Lua">
-      <UniqueIdentifier>{60398ed8-ec5b-486a-a212-eda9df23affd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Scanner">
       <UniqueIdentifier>{df85e09e-f224-4023-9e94-3836f1b44d7b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Scanner">
       <UniqueIdentifier>{30630c0a-07b2-437d-9efe-71803b365c05}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Lua">
-      <UniqueIdentifier>{c3c2342e-cee6-43ed-b00a-df350abfb207}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Tests">
-      <UniqueIdentifier>{6367e0cf-099f-4c25-adb0-2d5c1f8ed9e3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Tests">
-      <UniqueIdentifier>{6336bd68-9356-4fe1-8593-a3f576c23223}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lua\Tests">
-      <UniqueIdentifier>{ca9f4fb2-5b39-4452-8d85-7923badce963}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lua\Libs">
-      <UniqueIdentifier>{41619fca-2d7d-4ef7-8c4a-c5b488540d06}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ScannerTargetWindows.cpp">
       <Filter>Source Files\Scanner</Filter>
-    </ClCompile>
-    <ClCompile Include="LuaEngine.cpp">
-      <Filter>Source Files\Lua</Filter>
-    </ClCompile>
-    <ClCompile Include="LuaEngineExports.cpp">
-      <Filter>Source Files\Lua</Filter>
     </ClCompile>
     <ClCompile Include="Scanner.cpp">
       <Filter>Source Files\Scanner</Filter>
@@ -65,18 +35,6 @@
     <ClCompile Include="ScannerDataStructureBlueprint.cpp">
       <Filter>Source Files\Scanner</Filter>
     </ClCompile>
-    <ClCompile Include="TestBase.cpp">
-      <Filter>Source Files\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="BasicTest.cpp">
-      <Filter>Source Files\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="TestRunner.cpp">
-      <Filter>Source Files\Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="ScannerTest.cpp">
-      <Filter>Source Files\Tests</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ScannerTarget.h">
@@ -87,9 +45,6 @@
     </ClInclude>
     <ClInclude Include="Assert.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LuaEngine.h">
-      <Filter>Header Files\Lua</Filter>
     </ClInclude>
     <ClInclude Include="Scanner.h">
       <Filter>Header Files\Scanner</Filter>
@@ -118,28 +73,5 @@
     <ClInclude Include="ScannerDataStructureBlueprint.h">
       <Filter>Header Files\Scanner</Filter>
     </ClInclude>
-    <ClInclude Include="TestBase.h">
-      <Filter>Header Files\Tests</Filter>
-    </ClInclude>
-    <ClInclude Include="BasicTest.h">
-      <Filter>Header Files\Tests</Filter>
-    </ClInclude>
-    <ClInclude Include="ScannerTest.h">
-      <Filter>Header Files\Tests</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="TypeSystemTest.lua">
-      <Filter>Lua\Tests</Filter>
-    </CustomBuild>
-    <CustomBuild Include="testlib.lua">
-      <Filter>Lua\Libs</Filter>
-    </CustomBuild>
-    <CustomBuild Include="lib.lua">
-      <Filter>Lua\Libs</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ScannerTest.lua">
-      <Filter>Lua\Tests</Filter>
-    </CustomBuild>
   </ItemGroup>
 </Project>

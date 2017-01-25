@@ -17,12 +17,12 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
@@ -89,81 +89,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BasicTest.cpp" />
-    <ClCompile Include="ScannerTest.cpp" />
-    <ClCompile Include="TestRunner.cpp" />
     <ClCompile Include="FastAllocator.cpp" />
-    <ClCompile Include="LuaEngine.cpp" />
-    <ClCompile Include="LuaEngineExports.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="Scanner.cpp" />
     <ClCompile Include="ScannerDataStructureBlueprint.cpp" />
     <ClCompile Include="ScannerTargetWindows.cpp" />
     <ClCompile Include="ScanVariant.cpp" />
     <ClCompile Include="ScanVariantTypeTraits.cpp" />
-    <ClCompile Include="TestBase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Assert.h" />
-    <ClInclude Include="BasicTest.h" />
     <ClInclude Include="FastAllocator.h" />
-    <ClInclude Include="LuaEngine.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="ScannerDataStructureBlueprint.h" />
     <ClInclude Include="ScannerTarget.h" />
     <ClInclude Include="ScannerTargetWindows.h" />
-    <ClInclude Include="ScannerTest.h" />
     <ClInclude Include="ScannerTypes.h" />
     <ClInclude Include="ScanResult.h" />
     <ClInclude Include="ScanState.h" />
     <ClInclude Include="ScanVariant.h" />
     <ClInclude Include="ScanVariantTypeTraits.h" />
-    <ClInclude Include="TestBase.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="lib.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="testlib.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="TypeSystemTest.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="ScannerTest.lua">
-      <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(fullpath)" "$(TargetDir)\"</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Copying '%(filename)'</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(TargetDir)\Data\%(filename)</Outputs>
-    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
