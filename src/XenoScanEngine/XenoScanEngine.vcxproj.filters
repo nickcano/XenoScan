@@ -41,9 +41,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LuaPrimitive.cpp">
-      <Filter>Source Files\Lua</Filter>
-    </ClCompile>
     <ClCompile Include="ScannerTargetWindows.cpp">
       <Filter>Source Files\Scanner</Filter>
     </ClCompile>
@@ -82,12 +79,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LuaPrimitive.h">
-      <Filter>Header Files\Lua</Filter>
-    </ClInclude>
-    <ClInclude Include="LuaVariant.h">
-      <Filter>Header Files\Lua</Filter>
-    </ClInclude>
     <ClInclude Include="ScannerTarget.h">
       <Filter>Header Files\Scanner</Filter>
     </ClInclude>

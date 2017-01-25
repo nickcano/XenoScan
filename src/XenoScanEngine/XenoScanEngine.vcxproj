@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D33F10D3-3435-46DD-B5EA-CC986D5AF017}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>XenoScan</RootNamespace>
+    <RootNamespace>XenoScanEngine</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -42,12 +42,14 @@
     <OutDir>$(SolutionDir)\bin\</OutDir>
     <IntDir>$(SolutionDir)\tempfiles\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\bin\</OutDir>
     <IntDir>$(SolutionDir)\tempfiles\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -56,14 +58,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\deps\luajit-2.0\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src\XenoLua;$(SolutionDir)\deps\luajit-2.0\src;</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>lua51.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\deps\luajit-2.0\src</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XenoLua_Debug.lib;lua51.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)\deps\luajit-2.0\src;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -75,15 +77,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\deps\luajit-2.0\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src\XenoLua;$(SolutionDir)\deps\luajit-2.0\src;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>lua51.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\deps\luajit-2.0\src</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XenoLua_Release.lib;lua51.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)\deps\luajit-2.0\src;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -93,7 +95,6 @@
     <ClCompile Include="FastAllocator.cpp" />
     <ClCompile Include="LuaEngine.cpp" />
     <ClCompile Include="LuaEngineExports.cpp" />
-    <ClCompile Include="LuaPrimitive.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Scanner.cpp" />
     <ClCompile Include="ScannerDataStructureBlueprint.cpp" />
@@ -107,8 +108,6 @@
     <ClInclude Include="BasicTest.h" />
     <ClInclude Include="FastAllocator.h" />
     <ClInclude Include="LuaEngine.h" />
-    <ClInclude Include="LuaPrimitive.h" />
-    <ClInclude Include="LuaVariant.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Scanner.h" />
     <ClInclude Include="ScannerDataStructureBlueprint.h" />
