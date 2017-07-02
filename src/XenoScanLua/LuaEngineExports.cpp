@@ -1,9 +1,9 @@
 #include "LuaEngine.h"
 
-#include <LuaVariant.h>
-#include <ScannerTarget.h>
-#include <ScanVariant.h>
-#include <Scanner.h>
+#include "XenoLua/LuaVariant.h"
+#include "XenoScanEngine/ScannerTarget.h"
+#include "XenoScanEngine/ScanVariant.h"
+#include "XenoScanEngine/Scanner.h"
 
 std::vector<std::pair<std::string, LuaVariant>> __luaEngineExports;
 

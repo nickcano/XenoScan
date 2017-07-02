@@ -3,8 +3,8 @@
 #include "LuaEngine.h"
 #include "TestBase.h"
 
-#include <ScannerTarget.h>
-#include <Scanner.h>
+#include "XenoScanEngine/ScannerTarget.h"
+#include "XenoScanEngine/Scanner.h"
 
 
 int main(int argc, char** argv)
