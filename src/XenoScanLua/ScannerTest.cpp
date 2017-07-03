@@ -26,8 +26,8 @@ bool ScannerTest::runTest(const LuaEngineShPtr &engine)
 	engine->pushGlobal("TEST_STRING3_ADDRESS", (void*)this->string3.data());
 
 	// structure stuff
-	this->testStruct.entries[0] = 999;
-	this->testStruct.entries[1] = 1234;
+	this->testStruct.entries[0] = 1234;
+	this->testStruct.entries[1] = 999;
 	this->testStruct.entries[2] = 0xDEADBEEF;
 	this->testStruct.entries[3] = 0xBADF00D;
 	this->testStruct.entries[4] = 4321;
@@ -42,7 +42,6 @@ bool ScannerTest::runTest(const LuaEngineShPtr &engine)
 	engine->pushGlobal("TEST_STRUCT_SIX", this->testStruct.entries[5]);
 	engine->pushGlobal("TEST_STRUCT_SEVEN", this->testStruct.entries[6]);
 	engine->pushGlobal("TEST_STRUCT_ADDRESS", &this->testStruct.entries[0]);
-
 
 	if (!engine->doFile(L"ScannerTest.lua"))
 	{

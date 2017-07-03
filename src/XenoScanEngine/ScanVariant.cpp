@@ -465,7 +465,7 @@ void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) c
 			}
 			else if (traits->isUnsignedNumericType())
 			{
-				auto res = memcmp(memory, &this->numericValue, this->valueSize);
+				auto res = memcmp(&memory[0], &this->numericValue, this->valueSize);
 				COMPARISON_SET_VALUES1(res);
 			}
 		}

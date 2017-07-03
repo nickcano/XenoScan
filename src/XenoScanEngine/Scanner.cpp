@@ -68,10 +68,11 @@ MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr
 	while (nextAddress < endAdress)
 	{
 		MemoryInformation meminfo;
-		if (target->queryMemory(nextAddress, meminfo) && meminfo.isCommitted)
+		if (target->queryMemory(nextAddress, meminfo))
 		{
-			nextAddress = (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize + pageSize);
-			blocks.push_back(meminfo);
+			nextAddress = (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize);
+			if (meminfo.isCommitted)
+				blocks.push_back(meminfo);
 		}
 		else
 			nextAddress = (MemoryAddress)((size_t)nextAddress + pageSize);

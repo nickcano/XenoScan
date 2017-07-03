@@ -38,7 +38,7 @@ function findStructureResults()
 	local results = proc:getResults()
 	proc:destroy()
 
-	return results[TEST_STRUCT_ADDRESS]
+	return (results == false) and false or results[TEST_STRUCT_ADDRESS]
 end
 
 --------------- TEST STRUCTURE (STATIC) ---------------
