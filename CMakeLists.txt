@@ -14,4 +14,3 @@ link_libraries ("${CMAKE_CURRENT_SOURCE_DIR}\\deps\\luajit\\src\\lua51.lib")
 link_libraries ("Psapi.lib")
 
 add_subdirectory ("src")
-add_subdirectory ("deps")
