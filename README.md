@@ -14,7 +14,7 @@
 ### XenoScanLua
 *XenoScanLua* ties *XenoScanEngine* to *XenoLua* to provide a Lua-scriptable frontend for the scanner. Currently, this is the only entry-point to the scanner.
 
-Additionally, this project contains some test code that ensures everything is working properly. A test is a combination of a '.cpp', a '.h', and a '.lua' file. For examples on how to use the scanner, you can check out the `.lua` test files.
+Additionally, this project contains some test code that ensures everything is working properly. A test is a combination of a `.cpp`, a `.h`, and a `.lua` file. For examples on how to use the scanner, you can check out the `.lua` test files.
 
 ## Compiling
 *XenoScan* uses *CMake*, and has been tested with Visual Studio 2010. In theory, you should be able to build the code with any modernish compiler, as long as you use CMake to generate the project files. Before you can compile, you will need to make sure you've checked out the submodules. Once that's done, you'll also have to build the *luajit* submodule so *XenoScan* can link against the libraries.
