@@ -41,14 +41,23 @@ The code is designed to be platform-agnostic. Theoretically, to compile on any o
     - `uint32_t`
     - `int64_t`
     - `uint64_t`
-  - `float`
-  - `double`
+- `float`
+- `double`
 - ascii strings
 - wide strings
 - Custom data structures (think `C++` `struct`)
     - Can consist of any combination integral and decimal types
 
 <sub>\* *Lua frontend may choke on 64-bit integers, but the scanner library supports them.*</sub>
+
+**Scanning supports the following types of matching:**
+- Equal to
+- Greater than
+- Greater than or equal to
+- Less than
+- Less than or equal to
+- Ranges (`min <= check <= max`)
+
 
 **Additionally, there is functionality to detect all instances of the following types:**
 - `std::map`
