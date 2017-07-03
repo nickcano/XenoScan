@@ -1,0 +1,1 @@
+buildmsvc.bat "Visual Studio 10 2010"

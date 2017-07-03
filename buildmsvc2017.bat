@@ -1,0 +1,1 @@
+buildmsvc.bat "Visual Studio 15 2017"
