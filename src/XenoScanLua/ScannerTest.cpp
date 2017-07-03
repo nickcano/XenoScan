@@ -26,22 +26,22 @@ bool ScannerTest::runTest(const LuaEngineShPtr &engine)
 	engine->pushGlobal("TEST_STRING3_ADDRESS", (void*)this->string3.data());
 
 	// structure stuff
-	this->testStruct.one = 999;
-	this->testStruct.two = 1234;
-	this->testStruct.three = 0xDEADBEEF;
-	this->testStruct.four = 0xBADF00D;
-	this->testStruct.five = 4321;
-	this->testStruct.six = 1000000;
-	this->testStruct.seven = 7654321;
+	this->testStruct.entries[0] = 999;
+	this->testStruct.entries[1] = 1234;
+	this->testStruct.entries[2] = 0xDEADBEEF;
+	this->testStruct.entries[3] = 0xBADF00D;
+	this->testStruct.entries[4] = 4321;
+	this->testStruct.entries[5] = 1000000;
+	this->testStruct.entries[6] = 7654321;
 
-	engine->pushGlobal("TEST_STRUCT_ONE", this->testStruct.one);
-	engine->pushGlobal("TEST_STRUCT_TWO", this->testStruct.two);
-	engine->pushGlobal("TEST_STRUCT_THREE", this->testStruct.three);
-	engine->pushGlobal("TEST_STRUCT_FOUR", this->testStruct.four);
-	engine->pushGlobal("TEST_STRUCT_FIVE", this->testStruct.five);
-	engine->pushGlobal("TEST_STRUCT_SIX", this->testStruct.six);
-	engine->pushGlobal("TEST_STRUCT_SEVEN", this->testStruct.seven);
-	engine->pushGlobal("TEST_STRUCT_ADDRESS", &this->testStruct);
+	engine->pushGlobal("TEST_STRUCT_ONE", this->testStruct.entries[0]);
+	engine->pushGlobal("TEST_STRUCT_TWO", this->testStruct.entries[1]);
+	engine->pushGlobal("TEST_STRUCT_THREE", this->testStruct.entries[2]);
+	engine->pushGlobal("TEST_STRUCT_FOUR", this->testStruct.entries[3]);
+	engine->pushGlobal("TEST_STRUCT_FIVE", this->testStruct.entries[4]);
+	engine->pushGlobal("TEST_STRUCT_SIX", this->testStruct.entries[5]);
+	engine->pushGlobal("TEST_STRUCT_SEVEN", this->testStruct.entries[6]);
+	engine->pushGlobal("TEST_STRUCT_ADDRESS", &this->testStruct.entries[0]);
 
 
 	if (!engine->doFile(L"ScannerTest.lua"))

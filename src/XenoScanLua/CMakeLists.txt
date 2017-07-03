@@ -38,9 +38,21 @@ target_link_libraries(XenoScanLua XenoScanEngine)
 source_group("Scripts\\Libs"        FILES ${LUA_LIB_FILES})
 source_group("Scripts\\Tests"       FILES ${LUA_TEST_FILES})
 
-source_group("Sources"             FILES ${SOURCE_FILES})
+source_group("Sources"              FILES ${SOURCE_FILES})
 source_group("Sources\\Lua"         FILES ${SOURCE_LUA_FILES})
 source_group("Sources\\Tests"       FILES ${SOURCE_TEST_FILES})
 
 source_group("Headers\\Lua"         FILES ${HEADER_LUA_FILES})
 source_group("Headers\\Tests"       FILES ${HEADER_TEST_FILES})
+
+
+file(GLOB LUA_COPY_FILES "*.lua")
+add_custom_target(XenoScanLuaCopyFiles)
+get_target_property(XenoScanLuaLocation XenoScanLua LOCATION)
+get_filename_component(XenoScanLuaDir ${XenoScanLuaLocation} PATH)
+foreach(LUA_FILE ${LUA_COPY_FILES})
+  add_custom_command(TARGET XenoScanLuaCopyFiles PRE_BUILD
+                     COMMAND ${CMAKE_COMMAND} -E
+                         copy ${LUA_FILE} ${XenoScanLuaDir})
+endforeach()
+add_dependencies(XenoScanLua XenoScanLuaCopyFiles)

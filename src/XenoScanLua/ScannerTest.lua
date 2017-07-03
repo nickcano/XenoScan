@@ -20,8 +20,6 @@ tests.assertNotNil(string2, "Failed to locate std::string!")
 string3 = findStringResults(widestring, TEST_STRING3, TEST_STRING3_ADDRESS)
 tests.assertNotNil(string3, "Failed to locate std::wstring!")
 
-
-
 --------------- TEST STRUCTURE (COMMON) ---------------
 testStruct = struct(
 	uint32("one"),

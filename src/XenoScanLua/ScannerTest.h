@@ -17,12 +17,6 @@ private:
 	std::wstring string3;
 	struct
 	{
-		uint32_t one;
-		uint32_t two;
-		uint32_t three;
-		uint32_t four;
-		uint32_t five;
-		uint32_t six;
-		uint32_t seven;
+		uint32_t entries[7];
 	} testStruct;
 };
