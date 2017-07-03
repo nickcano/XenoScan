@@ -17,7 +17,7 @@
 Additionally, this project contains some test code that ensures everything is working properly. A test is a combination of a '.cpp', a '.h', and a '.lua' file. For examples on how to use the scanner, you can check out the `.lua` test files.
 
 ## Compiling
-The *XenoScan* project files are currently for the Visual Studio 2010 IDE. You should be able to compile the code with newer versions of Visual Studio, however.
+*XenoScan* uses *CMake*, and has been tested with the Visual Studio 2010 IDE. In theory, you should be able to build the code with any modernish compiler, as long as you use CMake to generate the project files.
 
 Before you can compile, you will need to make sure you've checked out the submodules. Once that's done, you'll also have to build the `luajit-2.0` submodule so *XenoScan* can link against the libraries.
 
