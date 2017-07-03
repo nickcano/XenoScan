@@ -13,6 +13,9 @@
 
 	This is a small trade-off for the performance gains and it's ability to clear up allocated
 	memory when it is destroyed.
+
+
+	ACTUALLY WE'RE NOT USING THIS NOW BECAUSE IT'S ONLY FASTER ON DEBUG BUILDS LOLWUT
 */
 
 template<size_t bytesPerBlock>
