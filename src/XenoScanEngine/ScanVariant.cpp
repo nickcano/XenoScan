@@ -329,154 +329,6 @@ const bool ScanVariant::getValue(std::vector<ScanVariant> &value) const
 	return false;
 }
 
-void ScanVariant::compareTo(const uint8_t* memory, CompareTypeFlags &compType) const
-{
-	// this is really messy, but we do it this way
-	// to ensure there's no extra indirection
-	// since speed is very important
-#define COMPARISON_SET_VALUES1(res) \
-	if (res == 0) { compType |= Scanner::SCAN_COMPARE_EQUALS; } \
-	else if (res > 0) { compType |= Scanner::SCAN_COMPARE_GREATER_THAN; }\
-	else { compType |= Scanner::SCAN_COMPARE_LESS_THAN; }
-#define COMPARISON_SET_VALUES2(a, b) \
-	if (a == b) { compType |= Scanner::SCAN_COMPARE_EQUALS; } \
-	else if (a > b) { compType |= Scanner::SCAN_COMPARE_GREATER_THAN; } \
-	else { compType |= Scanner::SCAN_COMPARE_LESS_THAN;} 
-#define COMPARISON_SET_VALUES3(a, b, T) \
-	T at, bt; at = *(T*)a; bt = *(T*)b; \
-	if (at == bt) { compType |= Scanner::SCAN_COMPARE_EQUALS; } \
-	else if (at > bt) { compType |= Scanner::SCAN_COMPARE_GREATER_THAN; } \
-	else { compType |= Scanner::SCAN_COMPARE_LESS_THAN;} 
-
-	if (this->type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
-	{
-		std::string::value_type terminator;
-		memcpy(&terminator, &memory[this->valueSize - sizeof(terminator)], sizeof(terminator));
-		if (terminator == (std::string::value_type)0)
-		{
-			auto res = strcmp(this->valueAsciiString.c_str(), (std::string::value_type*)&memory[0]);
-			COMPARISON_SET_VALUES1(res);
-			return;
-		}
-	}
-	else if (this->type == ScanVariant::SCAN_VARIANT_WIDE_STRING)
-	{
-		std::wstring::value_type terminator;
-		memcpy(&terminator, &memory[this->valueSize - sizeof(terminator)], sizeof(terminator));
-		if (terminator == (std::wstring::value_type)0)
-		{
-			auto res = wcscmp(this->valueWideString.c_str(), (std::wstring::value_type*)&memory[0]);
-			COMPARISON_SET_VALUES1(res);
-			return;
-		}
-	}
-	else if (this->type == ScanVariant::SCAN_VARIANT_DOUBLE)
-	{
-		double bValue;
-		memcpy(&bValue, &memory[0], sizeof(bValue));
-		COMPARISON_SET_VALUES2(this->valueDouble, bValue);
-		return;
-	}
-	else if (this->type == ScanVariant::SCAN_VARIANT_FLOAT)
-	{
-		float bValue;
-		memcpy(&bValue, &memory[0], sizeof(bValue));
-		COMPARISON_SET_VALUES2(this->valueFloat, bValue);
-		return;
-	}
-	else if (this->type == ScanVariant::SCAN_VARIANT_NULL)
-	{
-		return;
-	}
-	else if (this->isStructure())
-	{
-		compType |= Scanner::SCAN_COMPARE_EQUALS;
-
-		size_t offset = 0;
-		size_t iterations = this->valueStruct.size();
-		for (size_t i = 0; i < iterations; i++)
-		{
-			CompareTypeFlags flags = 0;
-			this->valueStruct[i].compareTo(&memory[offset], flags);
-			if (!(flags & Scanner::SCAN_COMPARE_EQUALS)
-				&& !(flags & Scanner::SCAN_COMPARE_ALWAYS_MATCH))
-			{
-				compType = 0;
-				break;
-			}
-			offset += this->valueStruct[i].getSize();
-		}
-		return;
-	}
-	else if (this->isRange())
-	{
-		CompareTypeFlags minFlags = 0;
-		this->valueStruct[0].compareTo(memory, minFlags);
-		if (minFlags != Scanner::SCAN_COMPARE_EQUALS &&
-			minFlags != Scanner::SCAN_COMPARE_GREATER_THAN)
-			return;
-
-		CompareTypeFlags maxFlags = 0;
-		this->valueStruct[1].compareTo(memory, maxFlags);
-		if (maxFlags != Scanner::SCAN_COMPARE_EQUALS &&
-			maxFlags != Scanner::SCAN_COMPARE_LESS_THAN)
-			return;
-
-		compType |= Scanner::SCAN_COMPARE_EQUALS;
-		return;
-	}
-	else if (this->isPlaceholder())
-	{
-		compType |= Scanner::SCAN_COMPARE_ALWAYS_MATCH;
-		return;
-	}
-	else
-	{
-		auto traits = this->getTypeTraits();
-		if (traits->isNumericType())
-		{
-			if (traits->isSignedNumericType())
-			{
-				switch (this->valueSize)
-				{
-				case 1:
-					{
-						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int8_t);
-						break;
-					}
-				case 2:
-					{
-						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int16_t);
-						break;
-					}
-				case 4:
-					{
-						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int32_t);
-						break;
-					}
-				case 8:
-					{
-						COMPARISON_SET_VALUES3(&this->numericValue, &memory[0], int64_t);
-						break;
-					}
-				default:
-					ASSERT(false);
-				}
-			}
-			else if (traits->isUnsignedNumericType())
-			{
-				auto res = memcmp(&memory[0], &this->numericValue, this->valueSize);
-				COMPARISON_SET_VALUES1(res);
-			}
-		}
-		return;
-	}
-
-#undef COMPARISON_SET_VALUES1
-#undef COMPARISON_SET_VALUES2
-#undef COMPARISON_SET_VALUES3
-}
-
 void ScanVariant::searchForMatchesInChunk(
 		const uint8_t* chunk,
 		const size_t &chunkSize,
@@ -485,31 +337,155 @@ void ScanVariant::searchForMatchesInChunk(
 		std::vector<size_t> &locations) const
 {
 	ASSERT(this->valueSize > 0);
+	ASSERT(this->compareToBuffer != nullptr);
 	if (chunkSize < this->valueSize) return;
 
-	size_t desiredAlignment = this->getTypeTraits()->getAlignment();
+	auto traits = this->getTypeTraits();
+	size_t desiredAlignment = traits->getAlignment();
 	size_t chunkAlignment = (size_t)startAddress % desiredAlignment;
 	size_t startOffset = (chunkAlignment == 0) ? 0 : desiredAlignment - chunkAlignment;
 	size_t scanEndAt = chunkSize - this->valueSize;
 
+	auto comp = traits->getComparator();
+	auto size = this->valueSize;
+	auto numericValue = &this->numericValue;
+	auto asciiValue = this->valueAsciiString.c_str();
+	auto wideValue = this->valueWideString.c_str();
+
 	for (size_t i = startOffset; i <= scanEndAt; )
 	{
-		CompareTypeFlags res = 0;
-		this->compareTo(&chunk[i], res); 
+		auto res = this->compareToBuffer(
+			this, comp, size,
+			numericValue,
+			asciiValue, wideValue,
+			&chunk[i]
+		);
+
+		// this won't let us use placeholders unless we're in a structure.
+		// to change this needs to check for SCAN_COMPARE_ALWAYS_MATCH
 		if ((res & compType) != 0)
 		{
 			locations.push_back(i);
-			// TODO: maybe make overlap checking optional?
-			i += this->valueSize;
+			i += this->valueSize; // TODO: maybe make overlap checking optional?
 		}
 		else
 			i += desiredAlignment;
 	}
 }
 
+const CompareTypeFlags ScanVariant::compareRangeToBuffer(
+	const ScanVariant* const obj,
+	const ScanVariantComparator &comparator,
+	const size_t &valueSize,
+	const void* const numericBuffer,
+	const void* const asciiBuffer,
+	const void* const wideBuffer,
+	const void* const target)
+{
+	auto minRes = comparator(&obj->valueStruct[0].numericValue, target);
+	if (!(minRes & Scanner::SCAN_COMPARE_GREATER_THAN_OR_EQUALS))
+		return Scanner::SCAN_COMPARE_LESS_THAN;
+	auto maxRes = comparator(&obj->valueStruct[1].numericValue, target);
+	if (!(maxRes & Scanner::SCAN_COMPARE_LESS_THAN_OR_EQUALS))
+		return Scanner::SCAN_COMPARE_GREATER_THAN;
+	return Scanner::SCAN_COMPARE_EQUALS;
+}
+const CompareTypeFlags ScanVariant::compareNumericToBuffer(
+	const ScanVariant* const obj,
+	const ScanVariantComparator &comparator,
+	const size_t &valueSize,
+	const void* const numericBuffer,
+	const void* const asciiBuffer,
+	const void* const wideBuffer,
+	const void* const target)
+{
+	return comparator(numericBuffer, target);
+}
+
+const CompareTypeFlags ScanVariant::comparePlaceholderToBuffer(
+	const ScanVariant* const obj,
+	const ScanVariantComparator &comparator,
+	const size_t &valueSize,
+	const void* const numericBuffer,
+	const void* const asciiBuffer,
+	const void* const wideBuffer,
+	const void* const target)
+{
+	return Scanner::SCAN_COMPARE_ALWAYS_MATCH;
+}
+const CompareTypeFlags ScanVariant::compareStructureToBuffer(
+	const ScanVariant* const obj,
+	const ScanVariantComparator &comparator,
+	const size_t &valueSize,
+	const void* const numericBuffer,
+	const void* const asciiBuffer,
+	const void* const wideBuffer,
+	const void* const target)
+{
+	size_t offset = 0;
+	auto buf = (uint8_t*)target;
+	size_t iterations = obj->valueStruct.size();
+	for (size_t i = 0; i < iterations; i++)
+	{
+		auto innerObj = &obj->valueStruct[i];
+		auto res = innerObj->compareTo(&buf[offset]);
+		if (!(res & Scanner::SCAN_COMPARE_EQUALS)
+			&& !(res & Scanner::SCAN_COMPARE_ALWAYS_MATCH))
+		{
+			return 0;
+		}
+		offset += obj->valueStruct[i].getSize();
+	}
+	return Scanner::SCAN_COMPARE_EQUALS;
+}
+const CompareTypeFlags ScanVariant::compareAsciiStringToBuffer(
+	const ScanVariant* const obj,
+	const ScanVariantComparator &comparator,
+	const size_t &valueSize,
+	const void* const numericBuffer,
+	const void* const asciiBuffer,
+	const void* const wideBuffer,
+	const void* const target)
+{
+	auto buf = (uint8_t*)target;
+	std::string::value_type terminator;
+	memcpy(&terminator, &buf[valueSize - sizeof(terminator)], sizeof(terminator));
+	if (terminator == (std::string::value_type)0)
+	{
+		auto res = strcmp((std::string::value_type*)asciiBuffer, (std::string::value_type*)target);
+		if (res == 0) return Scanner::SCAN_COMPARE_EQUALS;
+		else if (res > 0) return Scanner::SCAN_COMPARE_GREATER_THAN;
+		else return Scanner::SCAN_COMPARE_LESS_THAN;
+	}
+	return 0;
+}
+const CompareTypeFlags ScanVariant::compareWideStringToBuffer(
+	const ScanVariant* const obj,
+	const ScanVariantComparator &comparator,
+	const size_t &valueSize,
+	const void* const numericBuffer,
+	const void* const asciiBuffer,
+	const void* const wideBuffer,
+	const void* const target)
+{
+	auto buf = (uint8_t*)target;
+	std::wstring::value_type terminator;
+	memcpy(&terminator, &buf[valueSize - sizeof(terminator)], sizeof(terminator));
+	if (terminator == (std::wstring::value_type)0)
+	{
+		auto res = wcscmp((std::wstring::value_type*)wideBuffer, (std::wstring::value_type*)target);
+		if (res == 0) return Scanner::SCAN_COMPARE_EQUALS;
+		else if (res > 0) return Scanner::SCAN_COMPARE_GREATER_THAN;
+		else return Scanner::SCAN_COMPARE_LESS_THAN;
+	}
+	return 0;
+}
 
 void ScanVariant::setSizeAndValue()
 {
+	this->compareToBuffer = nullptr;
+
+	// first, we'll set the size and value properly
 	auto traits = this->getTypeTraits();
 	if (traits->isNumericType())
 		this->valueSize = traits->getSize();
@@ -526,6 +502,24 @@ void ScanVariant::setSizeAndValue()
 		for (auto member = this->valueStruct.begin(); member != this->valueStruct.end(); member++)
 			this->valueSize += member->getSize();
 	}
+
+	// next, we'll set up the proper comparator
+	// we do this to avoid type-checking at compare time.
+	// we avoid std:bind and other helps for speed.
+	if (this->isRange())
+		this->compareToBuffer = &ScanVariant::compareRangeToBuffer;
+	else if (this->isPlaceholder())
+		this->compareToBuffer = &ScanVariant::comparePlaceholderToBuffer;
+	else if (traits->isNumericType())
+		this->compareToBuffer = &ScanVariant::compareNumericToBuffer;
+	else if (this->getType() == SCAN_VARIANT_ASCII_STRING)
+		this->compareToBuffer = &ScanVariant::compareAsciiStringToBuffer;
+	else if (this->getType() == SCAN_VARIANT_WIDE_STRING)
+		this->compareToBuffer = &ScanVariant::compareWideStringToBuffer;
+	else if (traits->isStructureType())
+		this->compareToBuffer = &ScanVariant::compareStructureToBuffer;
+	else
+		ASSERT(false); // didn't find a comparator!
 }
 
 

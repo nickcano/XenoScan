@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "Assert.h"
 #include "ScanVariantTypeTraits.h"
@@ -139,10 +140,22 @@ public:
 			2. This means that we need to be sure there's no race conditions or any of circumstances
 				that can lead to the ScanVariant size changing between allocating the buffer, reading
 				the memory, and using one of these.
-			Realistically, when possible, we should try to use ScanVariant::compareTo
+			Realistically, when possible, we should try not to use ScanVariant::compareTo
 	*/
 	// TODO: test string scans, test all integer type scans
-	void compareTo(const uint8_t* memory, CompareTypeFlags &compType) const;
+	inline const CompareTypeFlags compareTo(const uint8_t* memory) const
+	{
+		return this->compareToBuffer(
+			this,
+			this->getTypeTraits()->getComparator(),
+			this->valueSize,
+			&this->numericValue,
+			this->valueAsciiString.c_str(),
+			this->valueWideString.c_str(),
+			memory
+		);
+	}
+
 
 	void searchForMatchesInChunk(
 		const uint8_t* chunk,
@@ -181,6 +194,65 @@ private:
 
 	size_t valueSize;
 
+
+	typedef const CompareTypeFlags (*InternalComparator)(
+		const ScanVariant* const obj,
+		const ScanVariantComparator &comparator,
+		const size_t &valueSize,
+		const void* const numericBuffer,
+		const void* const asciiBuffer,
+		const void* const wideBuffer,
+		const void* const target);
+	InternalComparator compareToBuffer;
+
+	static const CompareTypeFlags compareRangeToBuffer(
+		const ScanVariant* const obj,
+		const ScanVariantComparator &comparator,
+		const size_t &valueSize,
+		const void* const numericBuffer,
+		const void* const asciiBuffer,
+		const void* const wideBuffer,
+		const void* const target);
+	static const CompareTypeFlags compareNumericToBuffer(
+		const ScanVariant* const obj,
+		const ScanVariantComparator &comparator,
+		const size_t &valueSize,
+		const void* const numericBuffer,
+		const void* const asciiBuffer,
+		const void* const wideBuffer,
+		const void* const target);
+	static const CompareTypeFlags comparePlaceholderToBuffer(
+		const ScanVariant* const obj,
+		const ScanVariantComparator &comparator,
+		const size_t &valueSize,
+		const void* const numericBuffer,
+		const void* const asciiBuffer,
+		const void* const wideBuffer,
+		const void* const target);
+	static const CompareTypeFlags compareStructureToBuffer(
+		const ScanVariant* const obj,
+		const ScanVariantComparator &comparator,
+		const size_t &valueSize,
+		const void* const numericBuffer,
+		const void* const asciiBuffer,
+		const void* const wideBuffer,
+		const void* const target);
+	static const CompareTypeFlags compareAsciiStringToBuffer(
+		const ScanVariant* const obj,
+		const ScanVariantComparator &comparator,
+		const size_t &valueSize,
+		const void* const numericBuffer,
+		const void* const asciiBuffer,
+		const void* const wideBuffer,
+		const void* const target);
+	static const CompareTypeFlags compareWideStringToBuffer(
+		const ScanVariant* const obj,
+		const ScanVariantComparator &comparator,
+		const size_t &valueSize,
+		const void* const numericBuffer,
+		const void* const asciiBuffer,
+		const void* const wideBuffer,
+		const void* const target);
 
 	void setSizeAndValue();
 };

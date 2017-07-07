@@ -1,11 +1,14 @@
 #pragma once
 #include <string>
 
+#include "ScanVariantComparator.h"
+
 class ScanVariant;
 
 class ScanVariantUnderlyingTypeTraits
 {
 public:
+	virtual const ScanVariantComparator getComparator() const = 0;
 	virtual const size_t getSize() const = 0;
 	virtual const size_t getAlignment() const = 0;
 	virtual const std::wstring getName() const = 0;
@@ -33,6 +36,16 @@ public:
 	{}
 	virtual ~ScanVariantUnderlyingNumericTypeTraits() {}
 
+	inline virtual const ScanVariantComparator getComparator() const
+	{
+		if (FLOATING || !UNSIGNED)
+			return &signedNumericComparator<TYPE>;
+		else if (UNSIGNED)
+			return &unsignedNumericComparator<sizeof(TYPE)>;
+		
+		ASSERT(false); // shouldn't happen
+		return nullptr;
+	}
 	inline virtual const size_t getSize() const { return sizeof(TYPE); }
 	inline virtual const size_t getAlignment() const { return ALIGNOF(TYPE); }
 	inline virtual const std::wstring getName() const { return this->typeName; }
@@ -64,6 +77,7 @@ public:
 	ScanVariantUnderlyingAsciiStringTypeTraits() {}
 	virtual ~ScanVariantUnderlyingAsciiStringTypeTraits() {}
 
+	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 1; }
 	inline virtual const std::wstring getName() const { return L"ascii string"; }
@@ -88,6 +102,7 @@ public:
 	ScanVariantUnderlyingWideStringTypeTraits() {}
 	virtual ~ScanVariantUnderlyingWideStringTypeTraits() {}
 
+	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 1; }
 	inline virtual const std::wstring getName() const { return L"wide string"; }
@@ -111,6 +126,7 @@ public:
 	ScanVariantUnderlyingStructureTypeTraits() {}
 	virtual ~ScanVariantUnderlyingStructureTypeTraits() {}
 
+	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 1; }
 	inline virtual const std::wstring getName() const { return L"struct"; }
@@ -134,6 +150,7 @@ public:
 	ScanVariantUnderlyingNullTypeTraits() {}
 	virtual ~ScanVariantUnderlyingNullTypeTraits() {}
 
+	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 4; }
 	inline virtual const std::wstring getName() const { return L"null"; }

@@ -30,6 +30,7 @@ endif()
 file(GLOB SCANNER_VARIANT_HEADER_FILES
 	"ScanVariant.h"
 	"ScanVariantTypeTraits.h"
+	"ScanVariantComparator.h"
 )
 
 file(GLOB SCANNER_VARIANT_SOURCE_FILES

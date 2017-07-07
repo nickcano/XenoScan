@@ -221,8 +221,7 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 
 		for (auto needle = searchNeedles.begin(); needle != searchNeedles.end(); needle++)
 		{
-			CompareTypeFlags res = 0;
-			needle->compareTo(buffer, res); 
+			auto res = needle->compareTo(buffer); 
 			if ((res & compType) != 0)
 				newResultValues.push_back(ScanVariant(buffer, *needle));
 		}
