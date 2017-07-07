@@ -4,10 +4,10 @@
 #include "ScannerTarget.h"
 #include "ScannerTypes.h"
 #include "ScanVariant.h"
-#include "ScannerDataStructureBlueprint.h"
+#include "DataStructureBlueprint.h"
 
 
-class StdMapBlueprint : public ScannerDataStructureBlueprint
+class StdMapBlueprint : public DataStructureBlueprint
 {
 public:
 	static const std::string Key;
@@ -16,7 +16,7 @@ public:
 		const ScannerTargetShPtr &target,
 		const MemoryAddress &startPointer,
 		const PointerMap &pointerMap,
-		ScannerDataStructureDetails& details) const
+		DataStructureDetails& details) const
 	{
 		if (this->findRootNode(target, startPointer, details))
 		{			
@@ -129,7 +129,7 @@ private:
 		return false;
 	}
 
-	inline bool findRootNode(const ScannerTargetShPtr &target, const MemoryAddress &startPointer, ScannerDataStructureDetails& details) const
+	inline bool findRootNode(const ScannerTargetShPtr &target, const MemoryAddress &startPointer, DataStructureDetails& details) const
 	{
 		size_t loops = 0;
 		auto node = startPointer;
@@ -156,7 +156,7 @@ private:
 		return false;
 	}
 
-	inline bool countNodes(const ScannerTargetShPtr &target, ScannerDataStructureDetails& details) const
+	inline bool countNodes(const ScannerTargetShPtr &target, DataStructureDetails& details) const
 	{
 		std::set<MemoryAddress> searched;
 		std::stack<MemoryAddress> toSearch;

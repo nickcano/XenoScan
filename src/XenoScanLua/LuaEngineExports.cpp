@@ -44,10 +44,15 @@ int LuaEngine::attach()
 	ProcessIdentifier pid;
 	args[0].getAsInt(pid);
 
+	// create the target
+	auto target = ScannerTarget::Factory.createInstance("proc");
+	if (!target)
+		return this->luaRet();
+
 	// attach to the target
 	auto scannerPair = std::make_shared<ScannerPair>();
-	scannerPair->target = ScannerTarget::createScannerTarget();
-	if (!scannerPair->target->attach(pid))\
+	scannerPair->target = target;
+	if (!scannerPair->target->attach(pid))
 		return this->luaRet();
 
 	// if attach succeeded, create a scanner and push lua object

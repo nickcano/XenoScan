@@ -4,9 +4,9 @@
 #include "ScannerTarget.h"
 #include "ScannerTypes.h"
 #include "ScanVariant.h"
-#include "ScannerDataStructureBlueprint.h"
+#include "DataStructureBlueprint.h"
 
-class NativeClassInstanceBlueprint : public ScannerDataStructureBlueprint
+class NativeClassInstanceBlueprint : public DataStructureBlueprint
 {
 public:
 	static const std::string Key;
@@ -15,7 +15,7 @@ public:
 		const ScannerTargetShPtr &target,
 		const MemoryAddress &startPointer,
 		const PointerMap &pointerMap,
-		ScannerDataStructureDetails& details) const
+		DataStructureDetails& details) const
 	{
 		ASSERT(false); // NOT IMPLEMENTED BECAUSE findMatches DOES EVERYTHING
 		return false;
@@ -24,7 +24,7 @@ public:
 	virtual inline void findMatches(
 		const ScannerTargetShPtr &target,
 		const PointerMap &pointerMap,
-		ScanDataStructureResultMap& results)
+		DataStructureResultMap& results)
 	{
 		MemoryAddress moduleStart, moduleEnd;
 		if (!target->getMainModuleBounds(moduleStart, moduleEnd))
@@ -48,7 +48,7 @@ public:
 						auto instanceAddress = *instance;
 						if (instanceAddress < moduleStart ||  instanceAddress > moduleEnd)
 						{
-							ScannerDataStructureDetails details;
+							DataStructureDetails details;
 							details.identifier = instanceAddress;
 							details.members[VFTableTag] = ptrItr->first;
 							results[this->getTypeName()][instanceAddress] = details;

@@ -1,6 +1,6 @@
 #include "Scanner.h"
 #include "ScannerTarget.h"
-#include "ScannerDataStructureBlueprint.h"
+#include "DataStructureBlueprint.h"
 #include "Assert.h"
 
 #include <algorithm>
@@ -274,7 +274,7 @@ void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
 	this->iterateOverBlocks(target, blocks, findPointers);
 
 	// with the list of pointers, scan for valid structures
-	ScanDataStructureResultMap results;
-	ScannerDataStructureBlueprint::findDataStructures(target, foundPointers, results);
+	DataStructureResultMap results;
+	DataStructureBlueprint::findDataStructures(target, foundPointers, results);
 	this->scanState->updateState(results);
 }

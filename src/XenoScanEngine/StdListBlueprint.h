@@ -4,9 +4,9 @@
 #include "ScannerTarget.h"
 #include "ScannerTypes.h"
 #include "ScanVariant.h"
-#include "ScannerDataStructureBlueprint.h"
+#include "DataStructureBlueprint.h"
 
-class StdListBlueprint : public ScannerDataStructureBlueprint
+class StdListBlueprint : public DataStructureBlueprint
 {
 public:
 	static const std::string Key;
@@ -15,7 +15,7 @@ public:
 		const ScannerTargetShPtr &target,
 		const MemoryAddress &startPointer,
 		const PointerMap &pointerMap,
-		ScannerDataStructureDetails& details) const
+		DataStructureDetails& details) const
 	{
 		if (this->validateNode(target, startPointer))
 		{

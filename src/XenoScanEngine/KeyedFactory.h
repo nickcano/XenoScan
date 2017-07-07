@@ -42,7 +42,7 @@ class KeyedFactory
 {
 friend class KeyedProducerBase<K, A>;
 public:
-	typedef K KEY_TYPE;
+	typedef const K KEY_TYPE;
 	typedef A BASE_TYPE;
 
 	KeyedFactory() {}
@@ -50,7 +50,7 @@ public:
 	{
 		auto producer = this->producers.find(key);
 		if (producer != this->producers.end())
-			producer->second->createInstance();
+			return producer->second->createInstance();
 		return nullptr;
 	}
 
@@ -64,5 +64,7 @@ private:
 	std::map<K, const KeyedProducerBase<K, A>*> producers;
 };
 
-
-#define ADD_PRODUCER(FT, f, T) const KeyedProducer<FT::KEY_TYPE, FT::BASE_TYPE, T> Keyed_ ## T ## _Producer(&f);
+#define CREATE_FACTORY(CLASS) CLASS::FACTORY_TYPE CLASS::Factory;
+#define CREATE_PRODUCER(CLASS, T, KEY) \
+	CLASS::FACTORY_TYPE::KEY_TYPE T::Key = KEY;\
+	const KeyedProducer<CLASS::FACTORY_TYPE::KEY_TYPE, CLASS::FACTORY_TYPE::BASE_TYPE, T> Keyed_ ## T ## _Producer(&CLASS::Factory);

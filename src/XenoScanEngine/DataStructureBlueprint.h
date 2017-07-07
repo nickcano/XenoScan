@@ -12,18 +12,22 @@
 #include "ScanVariant.h"
 #include "KeyedFactory.h"
 
-struct ScannerDataStructureDetails
+struct DataStructureDetails
 {
 	MemoryAddress identifier;
 	std::map<std::string, ScanVariant> members;
 };
 
 typedef std::map<MemoryAddress, std::vector<MemoryAddress>> PointerMap;
-typedef std::map<std::string, std::map<MemoryAddress, ScannerDataStructureDetails>> ScanDataStructureResultMap;
+typedef std::map<std::string, std::map<MemoryAddress, DataStructureDetails>> DataStructureResultMap;
 
-class ScannerDataStructureBlueprint
+class DataStructureBlueprint
 {
 public:
+	typedef KeyedFactory<const std::string, DataStructureBlueprint> FACTORY_TYPE;
+	static FACTORY_TYPE Factory;
+
+
 	static const std::string ItemCountTag;
 	static const std::string VFTableTag;
 
@@ -31,17 +35,17 @@ public:
 		const ScannerTargetShPtr &target,
 		const MemoryAddress &startPointer,
 		const PointerMap &pointerMap,
-		ScannerDataStructureDetails& details) const = 0;
+		DataStructureDetails& details) const = 0;
 	virtual std::string getTypeName() const = 0;
 
 	virtual inline void findMatches(
 		const ScannerTargetShPtr &target,
 		const PointerMap &pointerMap,
-		ScanDataStructureResultMap& results)
+		DataStructureResultMap& results)
 	{
 		for (auto ptrItr = pointerMap.cbegin(); ptrItr != pointerMap.cend(); ptrItr++)
 		{
-			ScannerDataStructureDetails details;
+			DataStructureDetails details;
 			if (this->walkStructure(target, ptrItr->first, pointerMap, details))
 			{
 				results[this->getTypeName()][details.identifier] = details;
@@ -49,7 +53,5 @@ public:
 		}
 	}
 
-	static void findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, ScanDataStructureResultMap& results);
+	static void findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, DataStructureResultMap& results);
 };
-
-typedef KeyedFactory<std::string, ScannerDataStructureBlueprint> BPFactory;

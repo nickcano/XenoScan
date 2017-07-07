@@ -1,4 +1,3 @@
-#pragma once
 #include "ScannerTargetWindows.h"
 
 #include "Assert.h"
@@ -11,11 +10,6 @@
 
 #define WIN32_IS_EXECUTABLE_PROT(x) (x == PAGE_EXECUTE || x == PAGE_EXECUTE_READ || x == PAGE_EXECUTE_READWRITE || x == PAGE_EXECUTE_WRITECOPY)
 #define WIN32_IS_WRITEABLE_PROT(x) (x == PAGE_EXECUTE_READWRITE || x == PAGE_READWRITE)
-
-ScannerTargetShPtr ScannerTarget::createScannerTarget()
-{
-	return ScannerTargetShPtr(new ScannerTargetWindows());
-}
 
 ScannerTargetWindows::ScannerTargetWindows() :
 	processHandle(NULL)

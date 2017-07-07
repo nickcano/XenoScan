@@ -9,11 +9,10 @@ class ScannerTarget : public ScannerTargetHelper<ScannerTarget>
 {
 friend class ScannerTargetHelper<ScannerTarget>;
 public:
+	static FACTORY_TYPE Factory;
+
 	ScannerTarget() {};
 	~ScannerTarget() {};
-
-	//TODO: clean this up
-	static std::shared_ptr<ScannerTarget> createScannerTarget();
 
 	// Now, everything below this point is abstract
 	virtual bool attach(const ProcessIdentifier &pid) = 0;

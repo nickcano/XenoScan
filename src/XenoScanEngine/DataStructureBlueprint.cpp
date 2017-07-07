@@ -1,4 +1,4 @@
-#include "ScannerDataStructureBlueprint.h"
+#include "DataStructureBlueprint.h"
 
 #include "StdListBlueprint.h"
 #include "StdMapBlueprint.h"
@@ -15,25 +15,22 @@
 		3. abstract class instances (anything with a VF table)
 */
 
-const std::string ScannerDataStructureBlueprint::ItemCountTag = "itemCount";
-const std::string ScannerDataStructureBlueprint::VFTableTag = "VFTable";
+const std::string DataStructureBlueprint::ItemCountTag = "itemCount";
+const std::string DataStructureBlueprint::VFTableTag = "VFTable";
 
-const std::string StdListBlueprint::Key = "std::list";
-const std::string StdMapBlueprint::Key = "std::map";
-const std::string NativeClassInstanceBlueprint::Key = "Native Class Instance";
+CREATE_FACTORY(DataStructureBlueprint);
+CREATE_PRODUCER(DataStructureBlueprint, StdListBlueprint,              "std::list");
+CREATE_PRODUCER(DataStructureBlueprint, StdMapBlueprint,               "std::map");
+CREATE_PRODUCER(DataStructureBlueprint, NativeClassInstanceBlueprint,  "Native Class Instance");
 
-BPFactory factory;
-ADD_PRODUCER(BPFactory, factory, StdListBlueprint);
-ADD_PRODUCER(BPFactory, factory, StdMapBlueprint);
-ADD_PRODUCER(BPFactory, factory, NativeClassInstanceBlueprint);
 
-void ScannerDataStructureBlueprint::findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, ScanDataStructureResultMap& results)
+void DataStructureBlueprint::findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, DataStructureResultMap& results)
 {
 	auto& bps = target->getSupportedBlueprints();
 
 	for (auto bp = bps.begin(); bp != bps.end(); bp++)
 	{
-		auto print = factory.createInstance(*bp);
+		auto print = DataStructureBlueprint::Factory.createInstance(*bp);
 		ASSERT(print != nullptr);
 		print->findMatches(target, pointerMap, results);
 	}

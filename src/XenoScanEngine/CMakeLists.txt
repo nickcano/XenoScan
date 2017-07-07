@@ -13,6 +13,10 @@ file(GLOB SCANNER_TARGET_HEADER_FILES
 	"ScannerTargetHelper.h"
 )
 
+file(GLOB SCANNER_TARGET_SOURCE_FILES
+	"ScannerTarget.cpp"
+)
+
 if (WIN32)
 	file(GLOB SCANNER_TARGET_NATIVE_HEADER_FILES
 		"ScannerTargetWindows.h"
@@ -40,11 +44,11 @@ file(GLOB SCANNER_BLUEPRINT_HEADER_FILES
 	"NativeClassInstanceBlueprint.h"
 	"StdListBlueprint.h"
 	"StdMapBlueprint.h"
-	"ScannerDataStructureBlueprint.h"
+	"DataStructureBlueprint.h"
 )
 
 file(GLOB SCANNER_BLUEPRINT_SOURCE_FILES
-	"ScannerDataStructureBlueprint.cpp"
+	"DataStructureBlueprint.cpp"
 )
 
 file(GLOB HEADER_FILES
@@ -56,11 +60,14 @@ file(GLOB SOURCE_FILES
     "FastAllocator.cpp"
 )
 
+add_definitions(-DXENOSCANENGINE_LIB)
+
 add_library(XenoScanEngine STATIC
 	${SCANNER_HEADER_FILES}
 	${SCANNER_SOURCE_FILES}
 
 	${SCANNER_TARGET_HEADER_FILES}
+	${SCANNER_TARGET_SOURCE_FILES}
 	${SCANNER_TARGET_NATIVE_HEADER_FILES}
 	${SCANNER_TARGET_NATIVE_SOURCE_FILES}
 
@@ -83,6 +90,7 @@ source_group("Headers\\Scanner"               FILES ${SCANNER_HEADER_FILES})
 source_group("Sources\\Scanner"               FILES ${SCANNER_SOURCE_FILES})
 
 source_group("Headers\\ScannerTarget"         FILES ${SCANNER_TARGET_HEADER_FILES})
+source_group("Sources\\ScannerTarget"         FILES ${SCANNER_TARGET_SOURCE_FILES})
 source_group("Headers\\ScannerTarget\\Native" FILES ${SCANNER_TARGET_NATIVE_HEADER_FILES})
 source_group("Sources\\ScannerTarget\\Native" FILES ${SCANNER_TARGET_NATIVE_SOURCE_FILES})
 

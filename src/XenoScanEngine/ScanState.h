@@ -3,7 +3,7 @@
 #include "ScannerTypes.h"
 #include "ScanVariant.h"
 #include "ScanResult.h"
-#include "ScannerDataStructureBlueprint.h"
+#include "DataStructureBlueprint.h"
 
 class ScanState
 {
@@ -38,7 +38,7 @@ public:
 		// TODO: remove print
 	}
 
-	void updateState(ScanDataStructureResultMap& results)
+	void updateState(DataStructureResultMap& results)
 	{
 		this->foundStructures.swap(results);
 		results.clear();
@@ -62,11 +62,11 @@ public:
 	size_t resultSize() const { return this->lastResults.size(); }
 	ScanResultMap::const_iterator beginResult() const { return this->lastResults.cbegin(); }
 	ScanResultMap::const_iterator endResult() const { return this->lastResults.cend(); }
-	const ScanDataStructureResultMap foundDataStructures() const { return foundStructures; }
+	const DataStructureResultMap foundDataStructures() const { return foundStructures; }
 
 private:
 	bool firstScan;
 	ScanResultMap firstResults, lastResults;
-	ScanDataStructureResultMap foundStructures;
+	DataStructureResultMap foundStructures;
 };
 typedef std::shared_ptr<ScanState> ScanStateShPtr;

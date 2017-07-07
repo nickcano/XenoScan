@@ -1,10 +1,28 @@
 #pragma once
+
+#ifndef XENOSCANENGINE_LIB
+#error This header is for internal library use. Include "ScannerTarget.h" instead.
+#endif
+
+
+// This file is include guarded because we want to ignore it on non-Windows systems.
+// CMake will stop the compiler form seeing it, but it wont stop inclusion.
+#ifdef WIN32 
 #include "ScannerTarget.h"
 
+// We define NativeScannerTarget as ScannerTargetWindows so that the
+// factory will use this class for native processes
+#ifndef NativeScannerTarget
+#define NativeScannerTarget ScannerTargetWindows
+#else
+#error Only one NativeScannerTarget can exist!
+#endif
 
 class ScannerTargetWindows : public ScannerTarget
 {
 public:
+	static ScannerTarget::FACTORY_TYPE::KEY_TYPE Key;
+
 	ScannerTargetWindows();
 	~ScannerTargetWindows();
 
@@ -25,3 +43,5 @@ private:
 
 	MemoryAddress getMainModuleBaseAddress() const;
 };
+
+#endif

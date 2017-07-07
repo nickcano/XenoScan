@@ -1,12 +1,16 @@
 #pragma once
 #include <memory>
+#include <string>
 
 #include "ScannerTypes.h"
+#include "KeyedFactory.h"
 
 template<typename CRTP>
 class ScannerTargetHelper
 {
 public:
+	typedef KeyedFactory<const std::string, CRTP> FACTORY_TYPE;
+
 	template<typename T>
 	inline T read(const MemoryAddress &adr) const
 	{

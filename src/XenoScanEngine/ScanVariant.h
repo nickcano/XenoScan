@@ -156,7 +156,6 @@ public:
 		);
 	}
 
-
 	void searchForMatchesInChunk(
 		const uint8_t* chunk,
 		const size_t &chunkSize,
