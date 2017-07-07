@@ -25,12 +25,10 @@ public:
 	{
 		this->registerTo(factory);
 	}
-
 	virtual const K& getKey() const
 	{
 		return T::Key;
 	}
-
 	virtual const std::shared_ptr<A> createInstance() const
 	{
 		return std::shared_ptr<A>(new T());
@@ -53,13 +51,11 @@ public:
 			return producer->second->createInstance();
 		return nullptr;
 	}
-
 protected:
 	void registerProducer(const KeyedProducerBase<K, A>* producer)
 	{
 		producers[producer->getKey()] = producer;
 	}
-
 private:
 	std::map<K, const KeyedProducerBase<K, A>*> producers;
 };
