@@ -10,9 +10,6 @@ public:
 
 	virtual bool attach(const ProcessIdentifier &pid);
 	virtual bool isAttached() const;
-	virtual MemoryAddress lowestAddress() const;
-	virtual MemoryAddress highestAddress() const;
-	virtual size_t chunkSize() const;
 
 	virtual bool queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const;
 	virtual bool getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const;
@@ -24,7 +21,6 @@ protected:
 private:
 	ProcessHandle processHandle;
 	MemoryAddress mainModuleStart, mainModuleEnd;
-	MemoryAddress _lowestAddress, _highestAddress;
 	size_t pageSize;
 
 	MemoryAddress getMainModuleBaseAddress() const;

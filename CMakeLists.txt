@@ -18,6 +18,8 @@ include_directories ("src")
 include_directories ("${CMAKE_CURRENT_SOURCE_DIR}\\deps\\luajit\\src")
 link_libraries ("${CMAKE_CURRENT_SOURCE_DIR}\\deps\\luajit\\src\\lua51.lib")
 
-link_libraries ("Psapi.lib")
+if (WIN32)
+	link_libraries ("Psapi.lib")
+endif()
 
 add_subdirectory ("src")

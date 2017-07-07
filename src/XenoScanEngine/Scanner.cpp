@@ -59,8 +59,8 @@ void Scanner::runDataStructureScan(const ScannerTargetShPtr &target)
 
 MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr &target) const
 {
-	auto startAddress = target->lowestAddress();
-	auto endAdress = target->highestAddress();
+	auto startAddress = target->getLowestAddress();
+	auto endAdress = target->getHighestAddress();
 
 	auto nextAddress = startAddress;
 
@@ -78,8 +78,9 @@ MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr
 
 void Scanner::calculateBoundsOfBlocks(const ScannerTargetShPtr &target, const MemoryInformationCollection &blocks, MemoryAddress &lower, MemoryAddress &upper) const
 {
-	lower = target->highestAddress();
-	upper = target->lowestAddress();
+	// these are swapped because we're min/maxing based on blocks
+	lower = target->getHighestAddress();
+	upper = target->getLowestAddress();
 	for (auto block = blocks.cbegin(); block != blocks.cend(); block++)
 	{
 		auto endAddress = (MemoryAddress)((size_t)block->allocationBase + block->allocationSize);
@@ -99,7 +100,7 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 	std::cout << "Scanning... Block ";
 
 	// scan each memory block in chunks of chunkSize
-	auto chunkSize = target->chunkSize();
+	auto chunkSize = target->getChunkSize();
 	uint8_t* buffer = new uint8_t[chunkSize];
 	for (auto block = blocks.cbegin(); block != blocks.cend(); block++, blocknum++)
 	{

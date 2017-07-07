@@ -1,6 +1,10 @@
 #pragma once
 #include "ScannerTargetWindows.h"
+
 #include "Assert.h"
+#include "StdListBlueprint.h"
+#include "StdMapBlueprint.h"
+#include "NativeClassInstanceBlueprint.h"
 
 #include <Windows.h>
 #include <Psapi.h>
@@ -16,7 +20,13 @@ ScannerTargetShPtr ScannerTarget::createScannerTarget()
 ScannerTargetWindows::ScannerTargetWindows() :
 	processHandle(NULL)
 {
+	this->supportedBlueprints.insert(StdListBlueprint::Key);
+	this->supportedBlueprints.insert(StdMapBlueprint::Key);
+	this->supportedBlueprints.insert(NativeClassInstanceBlueprint::Key);
+
 	this->pointerSize = sizeof(void*);
+	this->chunkSize = 0x800000;
+	this->littleEndian = true;
 
 	static_assert(sizeof(void*) <= sizeof(MemoryAddress), "MemoryAddress type is too small!");
 }
@@ -71,11 +81,11 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 
-	static_assert(sizeof(this->_highestAddress) == sizeof(sysinfo.lpMaximumApplicationAddress), "Expected SYSTEM_INFO structure to have addresses the same size as scanner's MemoryAddress type");
+	static_assert(sizeof(this->highestAddress) == sizeof(sysinfo.lpMaximumApplicationAddress), "Expected SYSTEM_INFO structure to have addresses the same size as scanner's MemoryAddress type");
 
 	this->pageSize = static_cast<size_t>(sysinfo.dwPageSize);
-	this->_highestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMaximumApplicationAddress);
-	this->_lowestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMinimumApplicationAddress);
+	this->highestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMaximumApplicationAddress);
+	this->lowestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMinimumApplicationAddress);
 
 	// we good!
 	return true;
@@ -84,19 +94,6 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 bool ScannerTargetWindows::isAttached() const
 {
 	return (this->processHandle != 0);
-}
-
-MemoryAddress ScannerTargetWindows::lowestAddress() const
-{
-	return this->_lowestAddress;
-}
-MemoryAddress ScannerTargetWindows::highestAddress() const
-{
-	return this->_highestAddress;
-}
-size_t ScannerTargetWindows::chunkSize() const
-{
-	return 0x800000;
 }
 
 bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const

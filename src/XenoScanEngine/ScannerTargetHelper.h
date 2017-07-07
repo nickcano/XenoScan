@@ -33,6 +33,31 @@ public:
 		return static_cast<const CRTP*>(this)->pointerSize;
 	}
 
+	inline size_t getChunkSize() const
+	{
+		return static_cast<const CRTP*>(this)->chunkSize;
+	}
+
+	inline MemoryAddress getLowestAddress() const
+	{
+		return static_cast<const CRTP*>(this)->lowestAddress;
+	}
+
+	inline MemoryAddress getHighestAddress() const
+	{
+		return static_cast<const CRTP*>(this)->highestAddress;
+	}
+
+	inline bool isLittleEndian() const
+	{
+		return static_cast<const CRTP*>(this)->littleEndian;
+	}
+
+	inline const std::set<const std::string>& getSupportedBlueprints() const
+	{
+		return static_cast<const CRTP*>(this)->supportedBlueprints;
+	}
+
 	inline MemoryAddress incrementAddress(const MemoryAddress &adr, const size_t &times) const
 	{
 		return ((MemoryAddress)((size_t)adr + (times * static_cast<const CRTP*>(this)->pointerSize)));

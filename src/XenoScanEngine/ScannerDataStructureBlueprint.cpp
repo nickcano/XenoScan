@@ -22,29 +22,19 @@ const std::string StdListBlueprint::Key = "std::list";
 const std::string StdMapBlueprint::Key = "std::map";
 const std::string NativeClassInstanceBlueprint::Key = "Native Class Instance";
 
-
 BPFactory factory;
 ADD_PRODUCER(BPFactory, factory, StdListBlueprint);
 ADD_PRODUCER(BPFactory, factory, StdMapBlueprint);
 ADD_PRODUCER(BPFactory, factory, NativeClassInstanceBlueprint);
 
-
-// the reason we're generating a new function for each blueprint,
-// rather than using a list of ScannerDataStructureBlueprint
-// pointers, is to take advantage of the function inlining
-// we gain by knowing the exact type and not relying on the vtable.
-template<typename BLUEPRINT>
-inline void findBlueprint(const ScannerTargetShPtr &target, const PointerMap &pointerMap, ScanDataStructureResultMap& results)
-{
-	BLUEPRINT blueprint;
-	blueprint.findMatches(target, pointerMap, results);
-
-	auto inst = factory.createInstance("std::list");
-}
-
 void ScannerDataStructureBlueprint::findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, ScanDataStructureResultMap& results)
 {
-	findBlueprint<StdListBlueprint>(target, pointerMap, results);
-	findBlueprint<StdMapBlueprint>(target, pointerMap, results);
-	findBlueprint<NativeClassInstanceBlueprint>(target, pointerMap, results);
+	auto& bps = target->getSupportedBlueprints();
+
+	for (auto bp = bps.begin(); bp != bps.end(); bp++)
+	{
+		auto print = factory.createInstance(*bp);
+		ASSERT(print != nullptr);
+		print->findMatches(target, pointerMap, results);
+	}
 }
