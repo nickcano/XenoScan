@@ -1,52 +1,34 @@
 #pragma once
 #include <memory>
 
+#include "ScannerTargetHelper.h"
 #include "ScannerTypes.h"
 
-class ScannerTarget
+class ScannerTarget : public ScannerTargetHelper<ScannerTarget>
 {
+friend class ScannerTargetHelper<ScannerTarget>;
 public:
 	ScannerTarget() {};
 	~ScannerTarget() {};
 
+	//TODO: clean this up
+	static std::shared_ptr<ScannerTarget> createScannerTarget();
+
+	// Now, everything below this point is abstract
 	virtual bool attach(const ProcessIdentifier &pid) = 0;
 	virtual bool isAttached() const = 0;
 	virtual MemoryAddress lowestAddress() const = 0;
 	virtual MemoryAddress highestAddress() const = 0;
-	virtual size_t pageSize() const = 0;
 	virtual size_t chunkSize() const = 0;
 
-	template<typename T>
-	T read(const MemoryAddress &adr) const
-	{
-		T ret;
-		memset(&ret, 0, sizeof(T));
-		this->read(adr, sizeof(T), &ret);
-		return ret;
-	}
-
-	template<typename T>
-	bool read(const MemoryAddress &adr, T &value) const
-	{
-		return this->read(adr, sizeof(T), &value);
-	}
-
-	template<typename T>
-	bool readArray(const MemoryAddress &adr, const size_t size, T* &result) const
-	{
-		return this->read(adr, sizeof(T) * size, &result[0]);
-	}
-
-	virtual bool queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo) const = 0;
-	//virtual bool isDisassemblySupported() const { return false; }
-
+	virtual bool queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const = 0;
 	virtual bool getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const = 0;
 
-	//TODO: clean this up
-	static std::shared_ptr<ScannerTarget> createScannerTarget();
+protected:
+	size_t pointerSize;
 
-private:
-	virtual bool read(const MemoryAddress &adr, const size_t objectSize, void* result) const = 0;
+	virtual bool rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const = 0;
+	virtual bool rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const = 0;
 
 };
 

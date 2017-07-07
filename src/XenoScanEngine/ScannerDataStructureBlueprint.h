@@ -92,7 +92,7 @@ public:
 				{
 					for (auto ref = located->second.cbegin(); ref != located->second.cend(); ref++)
 					{
-						auto sizeLocation = OFFSET_MEMORY_ADDRESS(*ref, sizeof(MemoryAddress));
+						auto sizeLocation = target->incrementAddress(*ref, 1);
 						auto size = target->read<size_t>(sizeLocation);
 						if (size == walkedCount)
 						{
@@ -118,8 +118,8 @@ private:
 		//   - An object following it which points back to it
 		//   - And object before it which points forward to it
 		auto nextObject = target->read<MemoryAddress>(startPointer);
-		auto previousObject = target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(startPointer, sizeof(MemoryAddress)));
-		auto nextObjectBack = target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(nextObject, sizeof(MemoryAddress)));
+		auto previousObject = target->read<MemoryAddress>(target->incrementAddress(startPointer, 1));
+		auto nextObjectBack = target->read<MemoryAddress>(target->incrementAddress(nextObject, 1));
 		auto previousObjectForward = target->read<MemoryAddress>(previousObject);
 
 		return (startPointer == nextObjectBack && startPointer == previousObjectForward);
@@ -156,16 +156,16 @@ private:
 		MemoryAddress &parent,
 		MemoryAddress &right) const
 	{
-		left = target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(node, 0));
-		parent = target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(node, sizeof(MemoryAddress)));
-		right = target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(node, sizeof(MemoryAddress) * 2));
+		left = target->read<MemoryAddress>(node);
+		parent = target->read<MemoryAddress>(target->incrementAddress(node, 1));
+		right = target->read<MemoryAddress>(target->incrementAddress(node, 2));
 	}
 
 	inline MemoryAddress getNodeParent(
 		const ScannerTargetShPtr &target,
 		const MemoryAddress &node) const
 	{
-		return target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(node, sizeof(MemoryAddress)));
+		return target->read<MemoryAddress>(target->incrementAddress(node, 1));
 	}
 
 	inline bool validateNode(const ScannerTargetShPtr &target, const MemoryAddress &startPointer) const
@@ -296,7 +296,7 @@ private:
 			auto left = target->read<MemoryAddress>(search);
 			if (left != details.identifier) toSearch.push(left);
 
-			auto right = target->read<MemoryAddress>(OFFSET_MEMORY_ADDRESS(search, sizeof(MemoryAddress) * 2));
+			auto right = target->read<MemoryAddress>(target->incrementAddress(search, 2));
 			if (right != details.identifier) toSearch.push(right);
 		}
 
@@ -380,8 +380,6 @@ private:
 		std::vector<MemoryInformation> &executableBlocks,
 		std::vector<MemoryInformation> &readOnlyBlocks) const
 	{
-		auto pageSize = target->pageSize();
-
 		// identify all the different blocks in the main module of the target
 		//     E.G. on windows this will be the regions in PE header with
 		//     different protections
@@ -389,16 +387,13 @@ private:
 		while (nextAddress < moduleEnd)
 		{
 			MemoryInformation meminfo;
-			if (target->queryMemory(nextAddress, meminfo) && meminfo.isCommitted)
+			if (target->queryMemory(nextAddress, meminfo, nextAddress) && meminfo.isCommitted)
 			{
-				nextAddress = (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize + pageSize);
 				if (meminfo.isExecutable)
 					executableBlocks.push_back(meminfo);
 				else if (!meminfo.isWriteable)
 					readOnlyBlocks.push_back(meminfo);
 			}
-			else
-				nextAddress = (MemoryAddress)((size_t)nextAddress + pageSize);
 		}
 	}
 };

@@ -3,8 +3,6 @@
 #include <stdint.h>
 #include <vector>
 
-#define OFFSET_MEMORY_ADDRESS(a, offset) ((MemoryAddress)((size_t)a + offset))
-
 typedef void* MemoryAddress;
 typedef uint32_t ProcessIdentifier;
 typedef void* ProcessHandle;

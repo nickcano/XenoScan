@@ -16,6 +16,9 @@ ScannerTargetShPtr ScannerTarget::createScannerTarget()
 ScannerTargetWindows::ScannerTargetWindows() :
 	processHandle(NULL)
 {
+	this->pointerSize = sizeof(void*);
+
+	static_assert(sizeof(void*) <= sizeof(MemoryAddress), "MemoryAddress type is too small!");
 }
 
 ScannerTargetWindows::~ScannerTargetWindows()
@@ -70,7 +73,7 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 
 	static_assert(sizeof(this->_highestAddress) == sizeof(sysinfo.lpMaximumApplicationAddress), "Expected SYSTEM_INFO structure to have addresses the same size as scanner's MemoryAddress type");
 
-	this->_pageSize = static_cast<size_t>(sysinfo.dwPageSize);
+	this->pageSize = static_cast<size_t>(sysinfo.dwPageSize);
 	this->_highestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMaximumApplicationAddress);
 	this->_lowestAddress = reinterpret_cast<MemoryAddress>(sysinfo.lpMinimumApplicationAddress);
 
@@ -91,16 +94,12 @@ MemoryAddress ScannerTargetWindows::highestAddress() const
 {
 	return this->_highestAddress;
 }
-size_t ScannerTargetWindows::pageSize() const
-{
-	return this->_pageSize;
-}
 size_t ScannerTargetWindows::chunkSize() const
 {
 	return 0x800000;
 }
 
-bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo) const
+bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const
 {
 	ASSERT(this->isAttached());
 
@@ -110,7 +109,10 @@ bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformati
 	static_assert(sizeof(meminfo.allocationSize) == sizeof(memoryInfo.RegionSize), "Expected size of meminfo.allocationSize to match size of memoryInfo.RegionSize on Windows");
 
 	if (!VirtualQueryEx(this->processHandle, adr, &memoryInfo, sizeof(memoryInfo)))
+	{
+		nextAdr = (MemoryAddress)((size_t)adr + this->pageSize);
 		return false;
+	}
 
 	meminfo.isCommitted = (memoryInfo.State == MEM_COMMIT);
 	meminfo.allocationBase = memoryInfo.BaseAddress;
@@ -119,6 +121,8 @@ bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformati
 
 	meminfo.isExecutable = WIN32_IS_EXECUTABLE_PROT(memoryInfo.Protect);
 	meminfo.isWriteable = WIN32_IS_WRITEABLE_PROT(memoryInfo.Protect);
+
+	nextAdr = meminfo.allocationEnd;
 	return true;
 }
 
@@ -129,10 +133,16 @@ bool ScannerTargetWindows::getMainModuleBounds(MemoryAddress &start, MemoryAddre
 	return true;
 }
 
-bool ScannerTargetWindows::read(const MemoryAddress &adr, const size_t objectSize, void* result) const
+bool ScannerTargetWindows::rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const
 {
 	ASSERT(this->isAttached());
 	return (ReadProcessMemory(this->processHandle, adr, result, objectSize, NULL) != 0);
+}
+
+bool ScannerTargetWindows::rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const
+{
+	ASSERT(this->isAttached());
+	return (WriteProcessMemory(this->processHandle, adr, data, objectSize, NULL) != 0);
 }
 
 MemoryAddress ScannerTargetWindows::getMainModuleBaseAddress() const

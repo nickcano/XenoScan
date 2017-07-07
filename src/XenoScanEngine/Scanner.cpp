@@ -1,4 +1,5 @@
 #include "Scanner.h"
+#include "ScannerTarget.h"
 #include "ScannerDataStructureBlueprint.h"
 #include "Assert.h"
 
@@ -58,7 +59,6 @@ void Scanner::runDataStructureScan(const ScannerTargetShPtr &target)
 
 MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr &target) const
 {
-	auto pageSize = target->pageSize();
 	auto startAddress = target->lowestAddress();
 	auto endAdress = target->highestAddress();
 
@@ -68,14 +68,9 @@ MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr
 	while (nextAddress < endAdress)
 	{
 		MemoryInformation meminfo;
-		if (target->queryMemory(nextAddress, meminfo))
-		{
-			nextAddress = (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize);
+		if (target->queryMemory(nextAddress, meminfo, nextAddress))
 			if (meminfo.isCommitted)
 				blocks.push_back(meminfo);
-		}
-		else
-			nextAddress = (MemoryAddress)((size_t)nextAddress + pageSize);
 	}
 
 	return blocks;
@@ -119,7 +114,7 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 		}
 
 		// scan block
-		auto endAddress = (MemoryAddress)((size_t)block->allocationBase + block->allocationSize);
+		auto endAddress = block->allocationEnd;
 		auto currentChunkAddress = block->allocationBase;
 		auto currentChunkSize = std::min(chunkSize, block->allocationSize);
 
@@ -257,10 +252,10 @@ void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
 						-> void
 	{
 		// TODO: might have to fix this for platforms with different address sizes
-		size_t desiredAlignment = sizeof(MemoryAddress);
+		size_t desiredAlignment = target->getPointerSize();
 		size_t chunkAlignment = (size_t)baseAddress % desiredAlignment;
 		size_t startOffset = (chunkAlignment == 0) ? 0 : desiredAlignment - chunkAlignment;
-		size_t thingsToScan = (chunkSize - startOffset) / sizeof(MemoryAddress);
+		size_t thingsToScan = (chunkSize - startOffset) / desiredAlignment;
 
 		auto pointersToCheck = reinterpret_cast<const MemoryAddress*>(&chunk[startOffset]);
 		for (size_t i = 0; i < thingsToScan; i++)
@@ -269,7 +264,7 @@ void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
 			{
 				auto location = (MemoryAddress)
 				(
-					(size_t)startOffset + (size_t)baseAddress + i * sizeof(MemoryAddress)
+					(size_t)startOffset + (size_t)baseAddress + i * desiredAlignment
 				);
 				foundPointers[pointersToCheck[i]].push_back(location);
 			}
