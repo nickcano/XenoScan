@@ -71,10 +71,26 @@ typeModeMap =
    }
 }
 
+comparatorModeMap =
+{
+	["=="] = SCAN_COMPARE_EQUALS,
+	["="] = SCAN_COMPARE_EQUALS,
+
+	[">"] = SCAN_COMPARE_GREATER_THAN,
+	[">="] = SCAN_COMPARE_GREATER_THAN_OR_EQUALS,
+	["=>"] = SCAN_COMPARE_GREATER_THAN_OR_EQUALS,
+
+	["<"] = SCAN_COMPARE_LESS_THAN,
+	["<="] = SCAN_COMPARE_LESS_THAN_OR_EQUALS,
+	["=<"] = SCAN_COMPARE_LESS_THAN_OR_EQUALS
+}
+
 function Process:scanFor(scanValue, scanComparator, typeMode)
    local this = type(self) == 'table' and self or Process.new(self)
 
+
    typeMode = typeMode or TYPE_MODE_EXACT
+   scanComparator = type(scanComparator) == 'string' and comparatorModeMap[scanComparator] or scanComparator
    scanComparator = scanComparator or SCAN_COMPARE_EQUALS
 
    local raw_scanValue = nil
