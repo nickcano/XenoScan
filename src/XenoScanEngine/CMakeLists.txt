@@ -2,13 +2,10 @@ file(GLOB SCANNER_HEADER_FILES
 	"ScanResult.h"
 	"ScanState.h"
 	"Scanner.h"
-	"ScannerDataStructureBlueprint.h"
 	"ScannerTypes.h"
 )
 file(GLOB SCANNER_SOURCE_FILES
 	"Scanner.cpp"
-	"ScannerDataStructureBlueprint.cpp"
-
 )
 
 file(GLOB SCANNER_TARGET_HEADER_FILES
@@ -39,9 +36,21 @@ file(GLOB SCANNER_VARIANT_SOURCE_FILES
 )
 
 
+file(GLOB SCANNER_BLUEPRINT_HEADER_FILES
+	"NativeClassInstanceBlueprint.h"
+	"StdListBlueprint.h"
+	"StdMapBlueprint.h"
+	"ScannerDataStructureBlueprint.h"
+)
+
+file(GLOB SCANNER_BLUEPRINT_SOURCE_FILES
+	"ScannerDataStructureBlueprint.cpp"
+)
+
 file(GLOB HEADER_FILES
     "Assert.h"
     "FastAllocator.h"
+    "KeyedFactory.h"
 )
 file(GLOB SOURCE_FILES
     "FastAllocator.cpp"
@@ -57,6 +66,9 @@ add_library(XenoScanEngine STATIC
 
 	${SCANNER_VARIANT_HEADER_FILES}
 	${SCANNER_VARIANT_SOURCE_FILES}
+
+	${SCANNER_BLUEPRINT_HEADER_FILES}
+	${SCANNER_BLUEPRINT_SOURCE_FILES}
 
 	${SOURCE_FILES}
 	${HEADER_FILES}
@@ -76,3 +88,6 @@ source_group("Sources\\ScannerTarget\\Native" FILES ${SCANNER_TARGET_NATIVE_SOUR
 
 source_group("Headers\\ScanVariant"           FILES ${SCANNER_VARIANT_HEADER_FILES})
 source_group("Sources\\ScanVariant"           FILES ${SCANNER_VARIANT_SOURCE_FILES})
+
+source_group("Headers\\Blueprints"           FILES ${SCANNER_BLUEPRINT_HEADER_FILES})
+source_group("Sources\\Blueprints"           FILES ${SCANNER_BLUEPRINT_SOURCE_FILES})

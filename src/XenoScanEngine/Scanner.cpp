@@ -259,13 +259,14 @@ void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
 		auto pointersToCheck = reinterpret_cast<const MemoryAddress*>(&chunk[startOffset]);
 		for (size_t i = 0; i < thingsToScan; i++)
 		{
-			if (this->isValidPointer(lowerBound, upperBound, pointersToCheck[i]))
+			auto check = pointersToCheck[i];
+			if (this->isValidPointer(lowerBound, upperBound, check) && ((size_t)check % desiredAlignment) == 0)
 			{
 				auto location = (MemoryAddress)
 				(
 					(size_t)startOffset + (size_t)baseAddress + i * desiredAlignment
 				);
-				foundPointers[pointersToCheck[i]].push_back(location);
+				foundPointers[check].push_back(location);
 			}
 		}
 	};
