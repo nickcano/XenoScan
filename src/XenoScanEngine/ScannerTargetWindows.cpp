@@ -44,7 +44,7 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 	}
 
 	// some safety checks
-	static_assert(sizeof(pid) == sizeof(DWORD), "Expected size ofpid to match size of DWORD on Windows");
+	static_assert(sizeof(pid) == sizeof(DWORD), "Expected size of pid to match size of DWORD on Windows");
 	static_assert(sizeof(this->processHandle) == sizeof(HANDLE), "Expected size of this->processHandle to match size of HANDLE on Windows");
 
 	// open the process
