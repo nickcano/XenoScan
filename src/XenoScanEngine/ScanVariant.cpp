@@ -13,7 +13,7 @@ void ScanVariantUnderlyingNumericTypeTraits<TYPE, UNSIGNED, FLOATING>::fromStrin
 	uint8_t buffer[sizeof(int64_t)];
 	if (swscanf_s(input.c_str(), this->typeFormat.c_str(), &buffer[0]) == -1)
 	{
-		output = ScanVariant();
+		output = ScanVariant::MakeNull();
 		return;
 	}
 	memcpy(&value, &buffer[0], sizeof(value));
@@ -193,7 +193,7 @@ const bool ScanVariant::isComposite() const
 {
 	return this->getTypeTraits()->isStructureType();
 }
-const std::vector<ScanVariant>& ScanVariant::getCompositeValues() const
+const std::vector<const ScanVariant>& ScanVariant::getCompositeValues() const
 {
 	return this->valueStruct;
 }
@@ -328,7 +328,7 @@ const bool ScanVariant::getValue(float &value) const
 	return false;
 }
 
-const bool ScanVariant::getValue(std::vector<ScanVariant> &value) const
+const bool ScanVariant::getValue(std::vector<const ScanVariant> &value) const
 {
 	if (this->type == SCAN_VARIANT_STRUCTURE)
 	{
@@ -346,7 +346,7 @@ void ScanVariant::searchForMatchesInChunk(
 		std::vector<size_t> &locations) const
 {
 	ASSERT(this->valueSize > 0);
-	ASSERT(this->compareToBuffer != nullptr);
+	ASSERT(this->compareToBuffer != nullptr); // can happen if it's a null scan variant
 	if (chunkSize < this->valueSize) return;
 
 	auto traits = this->getTypeTraits();
@@ -527,6 +527,6 @@ void ScanVariant::setSizeAndValue()
 		this->compareToBuffer = &ScanVariant::compareWideStringToBuffer;
 	else if (traits->isStructureType())
 		this->compareToBuffer = &ScanVariant::compareStructureToBuffer;
-	else
+	else if (this->getType() != SCAN_VARIANT_NULL)
 		ASSERT(false); // didn't find a comparator!
 }

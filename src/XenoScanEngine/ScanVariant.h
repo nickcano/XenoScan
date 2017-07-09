@@ -53,8 +53,7 @@ public:
 	};
 
 
-	ScanVariant() : type(SCAN_VARIANT_NULL) { }
-
+	static const ScanVariant MakeNull() { ScanVariant v; v.setSizeAndValue(); return v; } 
 	static const ScanVariant MakePlaceholder(const ScanVariantType& type);
 
 	static const ScanVariant FromRawBuffer(const void* buffer,    const size_t& bufferSize, const ScanVariant& reference);
@@ -77,19 +76,19 @@ public:
 		v.setSizeAndValue();\
 		return v;\
 	}
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint8_t, valueuint8, SCAN_VARIANT_UINT8);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int8_t,                    valueint8,         SCAN_VARIANT_INT8);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint16_t,                  valueuint16,       SCAN_VARIANT_UINT16);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int16_t,                   valueint16,        SCAN_VARIANT_INT16);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint32_t,                  valueuint32,       SCAN_VARIANT_UINT32);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int32_t,                   valueint32,        SCAN_VARIANT_INT32);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint64_t,                  valueuint64,       SCAN_VARIANT_UINT64);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int64_t,                   valueint64,        SCAN_VARIANT_INT64);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, double,                    valueDouble,       SCAN_VARIANT_DOUBLE);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, float,                     valueFloat,        SCAN_VARIANT_FLOAT);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Struct, std::vector<ScanVariant>,  valueStruct,       SCAN_VARIANT_STRUCTURE);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::string,               valueAsciiString,  SCAN_VARIANT_ASCII_STRING);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::wstring,              valueWideString,   SCAN_VARIANT_WIDE_STRING);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint8_t,                         valueuint8,        SCAN_VARIANT_UINT8);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int8_t,                          valueint8,         SCAN_VARIANT_INT8);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint16_t,                        valueuint16,       SCAN_VARIANT_UINT16);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int16_t,                         valueint16,        SCAN_VARIANT_INT16);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint32_t,                        valueuint32,       SCAN_VARIANT_UINT32);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int32_t,                         valueint32,        SCAN_VARIANT_INT32);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint64_t,                        valueuint64,       SCAN_VARIANT_UINT64);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int64_t,                         valueint64,        SCAN_VARIANT_INT64);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, double,                          valueDouble,       SCAN_VARIANT_DOUBLE);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, float,                           valueFloat,        SCAN_VARIANT_FLOAT);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Struct, std::vector<const ScanVariant>,  valueStruct,       SCAN_VARIANT_STRUCTURE);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::string,                     valueAsciiString,  SCAN_VARIANT_ASCII_STRING);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::wstring,                    valueWideString,   SCAN_VARIANT_WIDE_STRING);
 
 
 	inline const size_t getSize() const
@@ -120,7 +119,7 @@ public:
 	const std::wstring toString() const;
 
 	const bool isComposite() const;
-	const std::vector<ScanVariant>& getCompositeValues() const;
+	const std::vector<const ScanVariant>& getCompositeValues() const;
 
 	inline const bool isStructure() const
 	{
@@ -149,7 +148,7 @@ public:
 	const bool getValue(int64_t &value) const;
 	const bool getValue(double &value) const;
 	const bool getValue(float &value) const;
-	const bool getValue(std::vector<ScanVariant> &value) const;
+	const bool getValue(std::vector<const ScanVariant> &value) const;
 
 	/*
 		This is safe IF and ONLY IF the caller takes some precautions:
@@ -184,12 +183,12 @@ public:
 private:
 	static ScanVariantUnderlyingTypeTraits* UnderlyingTypeTraits[SCAN_VARIANT_NULL + 1];
 
-	void ScanVariant::init();
+	ScanVariant() : type(SCAN_VARIANT_NULL) { }
 
 	ScanVariantType type;
 	std::string valueAsciiString;
 	std::wstring valueWideString;
-	std::vector<ScanVariant> valueStruct;
+	std::vector<const ScanVariant> valueStruct;
 	union
 	{
 		uint8_t numericValue;

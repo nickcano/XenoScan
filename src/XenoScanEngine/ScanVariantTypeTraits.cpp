@@ -18,5 +18,5 @@ void ScanVariantUnderlyingStructureTypeTraits::fromString(const std::wstring& in
 
 void ScanVariantUnderlyingNullTypeTraits::fromString(const std::wstring& input, ScanVariant& output) const
 {
-	output = ScanVariant();
+	output = ScanVariant::MakeNull();
 }

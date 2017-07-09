@@ -53,7 +53,7 @@ public:
 						if (size == walkedCount)
 						{
 							details.identifier = *object;
-							details.members[ItemCountTag] = ScanVariant::FromNumber(size);
+							details.members.insert(std::make_pair(ItemCountTag, ScanVariant::FromNumber(size)));
 							return true;
 						}
 					}

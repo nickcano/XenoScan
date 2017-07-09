@@ -182,7 +182,7 @@ private:
 			if (right != details.identifier) toSearch.push(right);
 		}
 
-		details.members[ItemCountTag] = ScanVariant::FromNumber(searched.size());
+		details.members.insert(std::make_pair(ItemCountTag, ScanVariant::FromNumber(searched.size())));
 		return true;
 	}
 };

@@ -60,7 +60,7 @@ LuaEngine::ScannerPairShPtr LuaEngine::getArgAsScannerObject(const std::vector<L
 	return *scanner;
 }
 
-bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const ScanVariant::ScanVariantType &type, bool allowBlank, ScanVariant &output) const
+const ScanVariant LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const ScanVariant::ScanVariantType &type, bool allowBlank) const
 {
 
 	switch (variant.getType())
@@ -70,27 +70,24 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 			LuaVariant::LuaVariantString memberValue;
 			variant.getAsString(memberValue);
 			if (memberValue.length() == 0)
-				return false;
-
-			output = ScanVariant::FromStringTyped(memberValue, type);
-			return true;
+				break;
+			return ScanVariant::FromStringTyped(memberValue, type);
 		}
 	case LUA_VARIANT_INT:
 		{
 			if (type < ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN ||
 				type > ScanVariant::SCAN_VARIANT_NUMERICTYPES_END)
-				return false;
+				break;
 
 			LuaVariant::LuaVariantInt memberValueInt;
 			variant.getAsInt(memberValueInt);
-			output = ScanVariant::FromNumberTyped(memberValueInt, type);
-			return true;
+			return ScanVariant::FromNumberTyped(memberValueInt, type);
 		}
 	case LUA_VARIANT_KTABLE:
 		{
 			LuaVariant::LuaVariantKTable value;
 			if (!variant.getAsKTable(value))
-				return false;
+				break;
 
 			auto itMin = value.find("__min");
 			auto itMax = value.find("__max");
@@ -98,49 +95,49 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 			{
 				if (type < ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN ||
 					type > ScanVariant::SCAN_VARIANT_NUMERICTYPES_END)
-					return false;
+					return ScanVariant::MakeNull();
 
 				LuaVariant::LuaVariantInt minValue, maxValue;
-				if (!itMin->second.getAsInt(minValue)) return false;
-				if (!itMax->second.getAsInt(maxValue)) return false;
+				if (!itMin->second.getAsInt(minValue) ||
+					!itMax->second.getAsInt(maxValue))
+					return ScanVariant::MakeNull();
 
 				auto min = ScanVariant::FromNumberTyped(minValue, type);
 				auto max = ScanVariant::FromNumberTyped(maxValue, type);
-				output = ScanVariant::FromVariantRange(min, max);
-				return true;
+				return ScanVariant::FromVariantRange(min, max);
 			}
 
 			if (value.size() == 0 && allowBlank)
 			{
 				if (type < ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN ||
 					type > ScanVariant::SCAN_VARIANT_NUMERICTYPES_END)
-					return false;
-				output = ScanVariant::MakePlaceholder(type);
-				return true;
+					break;
+				return ScanVariant::MakePlaceholder(type);
 			}
 
-			return false;
+			break;
 		}
 	case LUA_VARIANT_ITABLE:
 		{
 			LuaVariant::LuaVariantITable value;
 			if (!variant.getAsITable(value))
-				return false;
+				break;
 
 			if (value.size() == 0 && allowBlank)
 			{
 				if (type < ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN ||
 					type > ScanVariant::SCAN_VARIANT_NUMERICTYPES_END)
-					return false;
-				output = ScanVariant::MakePlaceholder(type);
-				return true;
+					break;
+				return ScanVariant::MakePlaceholder(type);
 			}
 
-			return false;
+			break;
 		}
 	default:
-		return false;
+		break;
 	}
+
+	return ScanVariant::MakeNull();
 }
 
 LuaVariant LuaEngine::getLuaVariantFromScanVariant(const ScanVariant &variant) const

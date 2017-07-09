@@ -15,7 +15,10 @@
 struct DataStructureDetails
 {
 	MemoryAddress identifier;
-	std::map<std::string, ScanVariant> members;
+	// this will throw a compile error if we access the map using [],
+	// as the default constructor is marked as private to prevent
+	// implicitly getting null variants.
+	std::map<const std::string, const ScanVariant> members;
 };
 
 typedef std::map<MemoryAddress, std::vector<MemoryAddress>> PointerMap;

@@ -196,7 +196,7 @@ int LuaEngine::runScan()
 	if (!scanner.get()) return this->luaRet(false);
 	if (!scanner->target->isAttached()) return this->luaRet(false); 
 
-	ScanVariant needle;
+	auto needle = ScanVariant::MakeNull();
 
 	uint32_t type, typeMode, comparator;
 	args[2].getAsInt(type);
@@ -213,7 +213,7 @@ int LuaEngine::runScan()
 
 		// the structure, before it becomes a variant,
 		// will end up in here
-		std::vector<ScanVariant> members;
+		std::vector<const ScanVariant> members;
 
 		// look up the schema table, which contains
 		// the list of objects (with name and type)
@@ -247,8 +247,8 @@ int LuaEngine::runScan()
 			auto itValue = valueTable.find(memberName);
 			if (itValue == valueTable.end()) return this->luaRet(false, std::string("Expected to find '" + memberName + "' in value table!"));
 
-			ScanVariant member;
-			if (!getScanVariantFromLuaVariant(itValue->second, memberType, true, member))
+			auto member = this->getScanVariantFromLuaVariant(itValue->second, memberType, true);
+			if (member.isNull())
 				return this->luaRet(false, "Unable to handle member type!");
 
 			members.push_back(member);
@@ -282,7 +282,8 @@ int LuaEngine::runScan()
 		auto it = valueTable.find("value");
 		if (it == valueTable.end()) return this->luaRet(false, "Expected 'value' field!");
 
-		if (!getScanVariantFromLuaVariant(it->second, type, false, needle))
+		needle = this->getScanVariantFromLuaVariant(it->second, type, false);
+		if (needle.isNull())
 			return this->luaRet(false, "Unable to handle member type!");
 	}
 

@@ -50,7 +50,7 @@ public:
 						{
 							DataStructureDetails details;
 							details.identifier = instanceAddress;
-							details.members[VFTableTag] = ScanVariant::FromMemoryAddress(ptrItr->first);
+							details.members.insert(std::make_pair(VFTableTag, ScanVariant::FromMemoryAddress(ptrItr->first)));
 							results[this->getTypeName()][instanceAddress] = details;
 						}
 					}
