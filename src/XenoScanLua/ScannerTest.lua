@@ -35,10 +35,11 @@ function findStructureResults()
 	local proc = Process(TEST_PID)
 	proc:newScan()
 	proc:scanFor(testStruct)
+	proc:scanFor(testStruct)
 	local results = proc:getResults()
 	proc:destroy()
 
-	return (results == false) and false or results[TEST_STRUCT_ADDRESS]
+	return (results == false) and nil or results[TEST_STRUCT_ADDRESS]
 end
 
 --------------- TEST STRUCTURE (STATIC) ---------------

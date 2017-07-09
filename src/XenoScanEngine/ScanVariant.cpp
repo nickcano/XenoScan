@@ -63,16 +63,13 @@ const ScanVariant ScanVariant::FromRawBuffer(const void* buffer, const size_t& b
 }
 const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariant& reference)
 {
-	ScanVariantType type;
 	if (reference.isRange())
-		type = reference.valueStruct[0].getType(); // this should work because we can't create a range with invalid or mismatched types
-	else if (reference.isPlaceholder())
-		type = reference.type - SCAN_VARIANT_PLACEHOLDER_BEGIN;
+		return ScanVariant::FromRawBuffer(buffer, bufferSize, reference.valueStruct[0]);
 	else if (reference.isStructure())
 	{
-		// structure requires access to the reference variant for member and type information, can't
-		// pass it further along
+		// structure requires access to the reference variant for member and type information
 		ScanVariant v;
+		v.type = reference.getType();
 		size_t offset = 0;
 		for (auto member = reference.valueStruct.begin(); member != reference.valueStruct.end(); member++)
 		{
@@ -80,35 +77,42 @@ const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t
 			v.valueStruct.push_back(vmember);
 			offset += member->getSize();
 		}
+		v.setSizeAndValue();
 		return v;
 	}
-	else if (type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
+	else if (reference.getType() == ScanVariant::SCAN_VARIANT_ASCII_STRING)
 	{
-		// strings are variable length, can't pass farther
-		auto sizeInBytes = reference.valueAsciiString.length() * sizeof(std::string::value_type);
+		auto sizeInBytes = reference.valueAsciiString.length() * sizeof(std::string::value_type); // todo maybe use the build in value size field
+
+		ASSERT(sizeInBytes <= bufferSize);
 		auto value = std::string((std::string::value_type*)buffer, (std::string::value_type*)&buffer[sizeInBytes]);
 		return ScanVariant::FromString(value);
 	}
-	else if (type == ScanVariant::SCAN_VARIANT_WIDE_STRING)
+	else if (reference.getType() == ScanVariant::SCAN_VARIANT_WIDE_STRING)
 	{
-		// same for wide strings
-		auto sizeInBytes = reference.valueWideString.length() * sizeof(std::wstring::value_type);
+		auto sizeInBytes = reference.valueWideString.length() * sizeof(std::wstring::value_type); // same as above
+
+		ASSERT(sizeInBytes <= bufferSize);
 		auto value = std::wstring((std::wstring::value_type*)buffer, (std::wstring::value_type*)&buffer[sizeInBytes]);
 		return ScanVariant::FromString(value);
 	}
 	else
-		type = reference.getType();
-	return ScanVariant::FromRawBuffer(buffer, bufferSize, type);
-}
+	{
+		ScanVariant v;
+		v.type = reference.getType();
+		if (reference.isPlaceholder())
+			v.type = (reference.getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN) + SCAN_VARIANT_NUMERICTYPES_BEGIN;
 
+		auto size = v.getTypeTraits()->getSize();
+		ASSERT(size <= bufferSize);
 
-const ScanVariant ScanVariant::FromRawBuffer(const void* buffer, const size_t& bufferSize, const ScanVariantType& type)
-{
-	return ScanVariant::FromRawBuffer((uint8_t*)buffer, bufferSize, type);
-}
-const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariantType& type)
-{
-	return ScanVariant::FromNumberTyped(*(ptrdiff_t*)buffer, type);
+		memcpy(&v.numericValue, &buffer[0], size);
+		v.setSizeAndValue();
+		return v;
+	}
+
+	ASSERT(false);
+	return ScanVariant();
 }
 
 const ScanVariant ScanVariant::FromVariantRange(const ScanVariant& min, const ScanVariant& max)

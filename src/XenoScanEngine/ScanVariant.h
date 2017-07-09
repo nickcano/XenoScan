@@ -59,8 +59,6 @@ public:
 
 	static const ScanVariant FromRawBuffer(const void* buffer,    const size_t& bufferSize, const ScanVariant& reference);
 	static const ScanVariant FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariant& reference);
-	static const ScanVariant FromRawBuffer(const void* buffer,    const size_t& bufferSize, const ScanVariantType& type);
-	static const ScanVariant FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariantType& type);
 
 	static const ScanVariant FromVariantRange(const ScanVariant& min, const ScanVariant& max);
 	static const ScanVariant FromMemoryAddress(const MemoryAddress& valueMemoryAddress);

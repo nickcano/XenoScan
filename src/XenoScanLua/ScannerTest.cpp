@@ -41,7 +41,7 @@ bool ScannerTest::runTest(const LuaEngineShPtr &engine)
 	engine->pushGlobal("TEST_STRUCT_FIVE", this->testStruct.entries[4]);
 	engine->pushGlobal("TEST_STRUCT_SIX", this->testStruct.entries[5]);
 	engine->pushGlobal("TEST_STRUCT_SEVEN", this->testStruct.entries[6]);
-	engine->pushGlobal("TEST_STRUCT_ADDRESS", &this->testStruct.entries[0]);
+	engine->pushGlobal("TEST_STRUCT_ADDRESS", (void*)&this->testStruct.entries[0]);
 
 	if (!engine->doFile(L"ScannerTest.lua"))
 	{
