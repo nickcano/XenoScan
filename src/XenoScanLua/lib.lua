@@ -1,3 +1,14 @@
+function table.icontains(t, val)
+	for _, v in ipairs(t) do
+		if (val == v) then
+			return true
+		end
+	end
+	return false
+end
+
+
+
 ATTACHED_PROCESSES = {}
 Process = {}
 Process.__index = Process
@@ -218,15 +229,6 @@ function struct(...)
    end
 
    return structure
-end
-
-function table.icontains(t, val)
-	for _, v in ipairs(t) do
-		if (val == v) then
-			return true
-		end
-	end
-	return false
 end
 
 function table.show(t, name, indent)

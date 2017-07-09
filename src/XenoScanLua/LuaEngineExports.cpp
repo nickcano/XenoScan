@@ -159,7 +159,10 @@ int LuaEngine::memoryReadString()
 	std::string ret = "";
 	int8_t chr = 0x00;
 	while ((chr = scanner->target->read<int8_t>(address)) != 0x00)
+	{
+		address = (MemoryAddress)&(((int8_t*)address)[1]);
 		ret += chr;
+	}
 
 	return this->luaRet(ret);
 }

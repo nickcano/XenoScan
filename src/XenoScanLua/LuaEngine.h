@@ -107,7 +107,7 @@ class __LuaEngineExporter
 public:
 	__LuaEngineExporter(const char* name, const LuaVariant& value)
 	{
-		__luaEngineExports.push_back(std::make_pair(name, [=]() -> const LuaVariant { std::cout << "HEY " << name << "\n"; return value; }));
+		__luaEngineExports.push_back(std::make_pair(name, [=]() -> const LuaVariant { return value; }));
 	}
 	~__LuaEngineExporter(){}
 };
@@ -118,9 +118,8 @@ class __LuaEngineFactoryKeyExporter
 public:
 	__LuaEngineFactoryKeyExporter(const char* name, const KeyedFactory<K, A>& factory)
 	{
-		auto func = [name, &factory]() -> const LuaVariant
+		auto func = [&factory]() -> const LuaVariant
 		{
-			std::cout << "HEY " << name << "\n";
 			auto keys = factory.getKeys();
 			LuaVariant::LuaVariantITable lkeys;
 			for (auto key = keys.cbegin(); key != keys.cend(); key++)
