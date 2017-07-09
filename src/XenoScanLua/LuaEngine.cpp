@@ -3,7 +3,7 @@
 LuaEngine::LuaEngine(void)
 {
 	for (auto exp = __luaEngineExports.begin(); exp != __luaEngineExports.end(); exp++)
-		this->pushGlobal(exp->first, exp->second);
+		this->pushGlobal(exp->first, exp->second());
 }
 
 LuaEngine::~LuaEngine(void) {}

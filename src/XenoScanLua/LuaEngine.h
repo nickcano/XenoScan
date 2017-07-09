@@ -7,6 +7,7 @@
 
 #include "XenoScanEngine/ScannerTarget.h"
 #include "XenoScanEngine/Scanner.h"
+#include "XenoScanEngine/KeyedFactory.h"
 
 
 #define LUAENGINE_EXPORT_VALUE(type, name, val) __LuaEngineExporter __exporter ## name (#name, (type)val);
@@ -16,9 +17,12 @@
 		if (inst != nullptr) return inst-> ## uniq (); \
 		return 0; \
 	} \
-	__LuaEngineExporter __exporter ## uniq (name, & __exporter__func ## uniq);
+	__LuaEngineExporter __exporter ## uniq (name, LuaVariant(& __exporter__func ## uniq));
 
-extern std::vector<std::pair<std::string, LuaVariant>> __luaEngineExports;
+#define LUAENGINE_EXPORT_FACTORY_KEYS(factoryType, factory, name) \
+	__LuaEngineFactoryKeyExporter<factoryType::KEY_TYPE, factoryType::BASE_TYPE>  __factoryKeyExporter ## name (#name, factory)
+
+extern std::vector<std::pair<const std::string, const std::function<const LuaVariant()>>> __luaEngineExports;
 
 class LuaEngine : public LuaPrimitive
 {
@@ -101,9 +105,29 @@ typedef std::shared_ptr<LuaEngine> LuaEngineShPtr;
 class __LuaEngineExporter
 {
 public:
-	__LuaEngineExporter(const char* name, LuaVariant value)
+	__LuaEngineExporter(const char* name, const LuaVariant& value)
 	{
-		__luaEngineExports.push_back(std::make_pair(name, value));
+		__luaEngineExports.push_back(std::make_pair(name, [=]() -> const LuaVariant { std::cout << "HEY " << name << "\n"; return value; }));
 	}
 	~__LuaEngineExporter(){}
+};
+
+template<typename K, typename A>
+class __LuaEngineFactoryKeyExporter
+{
+public:
+	__LuaEngineFactoryKeyExporter(const char* name, const KeyedFactory<K, A>& factory)
+	{
+		auto func = [name, &factory]() -> const LuaVariant
+		{
+			std::cout << "HEY " << name << "\n";
+			auto keys = factory.getKeys();
+			LuaVariant::LuaVariantITable lkeys;
+			for (auto key = keys.cbegin(); key != keys.cend(); key++)
+				lkeys.push_back(*key);
+			return lkeys;
+		};
+		__luaEngineExports.push_back(std::make_pair(name, func));
+	}
+	~__LuaEngineFactoryKeyExporter(){}
 };

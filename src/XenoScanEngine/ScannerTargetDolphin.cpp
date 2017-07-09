@@ -2,6 +2,8 @@
 
 #include "Assert.h"
 
+#include <algorithm>
+
 ScannerTargetDolphin::ScannerTargetDolphin() :
 	sharedMemoryHandle(nullptr)
 {
@@ -14,6 +16,7 @@ ScannerTargetDolphin::ScannerTargetDolphin() :
 	this->detach();
 
 	static_assert(sizeof(uint16_t) <= sizeof(MemoryAddress), "MemoryAddress type is too small!");
+	static_assert(sizeof(size_t) >= sizeof(MemoryAddress), "size_t is too small!");
 }
 
 ScannerTargetDolphin::~ScannerTargetDolphin()
@@ -37,7 +40,7 @@ bool ScannerTargetDolphin::attach(const ProcessIdentifier &pid)
 		this->detach();
 		return false;
 	}
-	this->views.push_back(MemoryView(0, 0x01800000, ramView));
+	this->views.push_back(MemoryView(0, 0x01800000, (uint8_t*)ramView));
 
 	// we good!
 	return true;
@@ -105,13 +108,25 @@ bool ScannerTargetDolphin::getMainModuleBounds(MemoryAddress &start, MemoryAddre
 bool ScannerTargetDolphin::rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const
 {
 	ASSERT(this->isAttached());
-	
+
+	for (auto view = this->views.cbegin(); view != this->views.cend(); view++)
+	{
+		if (adr >= view->start && adr < view->end)
+		{
+			size_t offset = ((size_t)adr - (size_t)view->start);
+			size_t size = std::min(offset + objectSize, view->size) - offset;
+			memcpy(result, &view->buffer[offset], size);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool ScannerTargetDolphin::rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const
 {
 	ASSERT(this->isAttached());
-	
+	return false;
 }
 
 void ScannerTargetDolphin::detach()
@@ -185,13 +200,13 @@ void ScannerTargetDolphin::releaseSHMHandle(const void* handle)
 	CloseHandle((HANDLE)handle);
 }
 
-void* ScannerTargetDolphin::obtainView(const void* handle, const MemoryAddress& offset, size_t size)
+uint8_t* ScannerTargetDolphin::obtainView(const void* handle, const MemoryAddress& offset, size_t size)
 {
-	return MapViewOfFile((HANDLE)handle, FILE_MAP_ALL_ACCESS, 0, (DWORD)offset, size);
+	return (uint8_t*)MapViewOfFile((HANDLE)handle, FILE_MAP_ALL_ACCESS, 0, (DWORD)offset, size);
 }
-void ScannerTargetDolphin::releaseView(const void* viewHandle)
+void ScannerTargetDolphin::releaseView(const uint8_t* viewHandle)
 {
-	UnmapViewOfFile(viewHandle);
+	UnmapViewOfFile((void*)viewHandle);
 }
 
 #else

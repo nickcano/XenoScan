@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <set>
 #include <memory>
 
 template<typename K, typename A>
@@ -51,13 +52,22 @@ public:
 			return producer->second->createInstance();
 		return nullptr;
 	}
+
+	const std::set<const KEY_TYPE> getKeys() const
+	{
+		std::set<const KEY_TYPE> ret;
+		for (auto prod = this->producers.cbegin(); prod != this->producers.cend(); prod++)
+			ret.insert(prod->first);
+		return ret;
+	}
+
 protected:
 	void registerProducer(const KeyedProducerBase<K, A>* producer)
 	{
 		producers[producer->getKey()] = producer;
 	}
 private:
-	std::map<K, const KeyedProducerBase<K, A>*> producers;
+	std::map<const K, const KeyedProducerBase<K, A>*> producers;
 };
 
 #define CREATE_FACTORY(CLASS) CLASS::FACTORY_TYPE CLASS::Factory;

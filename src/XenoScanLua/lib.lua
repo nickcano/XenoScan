@@ -1,12 +1,24 @@
 ATTACHED_PROCESSES = {}
 Process = {}
 Process.__index = Process
+
+PROCESS_ATTACH_KEY = "proc"
+
+assert(table.icontains(ATTACH_TARGET_NAMES, PROCESS_ATTACH_KEY), "expected a native proc target type!")
+
 function Process.new(pid)
    local this = {}
    if (not ATTACHED_PROCESSES[pid]) then
       setmetatable(this, Process)
       this._pid = pid
-      this.__nativeObject = attach(this._pid)
+
+      if (type(pid) == 'string') then
+         assert(table.icontains(ATTACH_TARGET_NAMES, pid), "Target with type '" .. pid .. "' not implemented!")
+		 this.__nativeObject = attach(pid, 0)
+      else
+         this.__nativeObject = attach(PROCESS_ATTACH_KEY, this._pid)
+	  end
+
       assert(this.__nativeObject, "Failed to attach to process '" .. tostring(pid) .. "'!")
       ATTACHED_PROCESSES[pid] = this
    else
@@ -208,6 +220,14 @@ function struct(...)
    return structure
 end
 
+function table.icontains(t, val)
+	for _, v in ipairs(t) do
+		if (val == v) then
+			return true
+		end
+	end
+	return false
+end
 
 function table.show(t, name, indent)
    local cart     -- a container

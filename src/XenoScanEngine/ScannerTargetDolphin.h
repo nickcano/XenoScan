@@ -31,14 +31,14 @@ private:
 
 	struct MemoryView
 	{
-		MemoryView(MemoryAddress start, size_t size, void* buffer)
+		MemoryView(MemoryAddress start, size_t size, uint8_t* buffer)
 			: start(start), size(size), buffer(buffer)
 		{
 			end = (MemoryAddress)((size_t)start + size);
 		}
 		size_t size;
 		MemoryAddress start, end;
-		void* buffer;
+		uint8_t* buffer;
 	};
 
 	std::vector<MemoryView> views;
@@ -48,6 +48,6 @@ private:
 	// these helper functions will be implemented for each OS
 	static void* obtainSHMHandle();
 	static void releaseSHMHandle(const void* handle);
-	static void* obtainView(const void* handle, const MemoryAddress& offset, size_t size);
-	static void releaseView(const void* viewHandle);
+	static uint8_t* obtainView(const void* handle, const MemoryAddress& offset, size_t size);
+	static void releaseView(const uint8_t* viewHandle);
 };

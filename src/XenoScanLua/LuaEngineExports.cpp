@@ -5,7 +5,7 @@
 #include "XenoScanEngine/ScanVariant.h"
 #include "XenoScanEngine/Scanner.h"
 
-std::vector<std::pair<std::string, LuaVariant>> __luaEngineExports;
+std::vector<std::pair<const std::string, const std::function<const LuaVariant()>>> __luaEngineExports;
 
 
 // compare types
@@ -36,16 +36,22 @@ LUAENGINE_EXPORT_VALUE(int32_t, SCAN_VARIANT_DOUBLE,                     ScanVar
 LUAENGINE_EXPORT_VALUE(int32_t, SCAN_VARIANT_FLOAT,                      ScanVariant::SCAN_VARIANT_FLOAT);
 LUAENGINE_EXPORT_VALUE(int32_t, SCAN_VARIANT_STRUCTURE,                  ScanVariant::SCAN_VARIANT_STRUCTURE);
 
+// target keys
+LUAENGINE_EXPORT_FACTORY_KEYS(ScannerTarget::FACTORY_TYPE, ScannerTarget::Factory, ATTACH_TARGET_NAMES);
+
 
 LUAENGINE_EXPORT_FUNCTION(attach, "attach"); // attach(pid)
 int LuaEngine::attach()
 {
-	auto args = this->getArguments<LUA_VARIANT_INT>();
+	auto args = this->getArguments<LUA_VARIANT_STRING, LUA_VARIANT_INT>();
+
+	std::string targetType;
+	args[0].getAsString(targetType);
 	ProcessIdentifier pid;
-	args[0].getAsInt(pid);
+	args[1].getAsInt(pid);
 
 	// create the target
-	auto target = ScannerTarget::Factory.createInstance("proc");
+	auto target = ScannerTarget::Factory.createInstance(targetType);
 	if (!target)
 		return this->luaRet();
 
