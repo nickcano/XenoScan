@@ -46,7 +46,7 @@ public:
 
 	virtual ScanVariant toVariant() const
 	{
-		return ScanVariant(this->adr);
+		return ScanVariant::FromMemoryAddress(this->adr);
 	}
 
 private:

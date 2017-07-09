@@ -17,7 +17,7 @@ void ScanVariantUnderlyingNumericTypeTraits<TYPE, UNSIGNED, FLOATING>::fromStrin
 		return;
 	}
 	memcpy(&value, &buffer[0], sizeof(value));
-	output = ScanVariant(value);
+	output = ScanVariant::FromNumber(value);
 }
 
 ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::SCAN_VARIANT_NULL + 1] =
@@ -45,7 +45,7 @@ ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::
 	new ScanVariantUnderlyingNullTypeTraits()
 };
 
-ScanVariant ScanVariant::MakePlaceholder(ScanVariantType type)
+const ScanVariant ScanVariant::MakePlaceholder(const ScanVariantType& type)
 {
 	ASSERT(type >= SCAN_VARIANT_NUMERICTYPES_BEGIN && type <= SCAN_VARIANT_NUMERICTYPES_END);
 
@@ -57,123 +57,128 @@ ScanVariant ScanVariant::MakePlaceholder(ScanVariantType type)
 	return temp;
 }
 
-ScanVariant::ScanVariant(const size_t &chunkSize, const uint8_t* memory, const ScanVariant &reference)
+const ScanVariant ScanVariant::FromRawBuffer(const void* buffer, const size_t& bufferSize, const ScanVariant& reference)
 {
+	return ScanVariant::FromRawBuffer((uint8_t*)buffer, bufferSize, reference);
+}
+const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariant& reference)
+{
+	ScanVariantType type;
 	if (reference.isRange())
-	{
-		this->type = reference.valueStruct[0].getType();
-		ASSERT(
-			this->type >= SCAN_VARIANT_ALLTYPES_BEGIN &&
-			this->type <= SCAN_VARIANT_ALLTYPES_END
-		);
-	}
+		type = reference.valueStruct[0].getType(); // this should work because we can't create a range with invalid or mismatched types
 	else if (reference.isPlaceholder())
+		type = reference.type - SCAN_VARIANT_PLACEHOLDER_BEGIN;
+	else if (reference.isStructure())
 	{
-		this->type = reference.type - SCAN_VARIANT_PLACEHOLDER_BEGIN;
-		ASSERT(
-			this->type >= SCAN_VARIANT_ALLTYPES_BEGIN &&
-			this->type <= SCAN_VARIANT_ALLTYPES_END
-		);
-	}
-	else
-	{
-		this->type = reference.getType();
-		ASSERT((
-				this->type >= SCAN_VARIANT_ALLTYPES_BEGIN &&
-				this->type <= SCAN_VARIANT_ALLTYPES_END
-			) ||
-			this->isStructure()
-		);
-	}
-
-	if (this->type == ScanVariant::SCAN_VARIANT_STRUCTURE)
-	{
+		// structure requires access to the reference variant for member and type information, can't
+		// pass it further along
+		ScanVariant v;
 		size_t offset = 0;
 		for (auto member = reference.valueStruct.begin(); member != reference.valueStruct.end(); member++)
 		{
-			ASSERT(offset + member->getSize() <= chunkSize);
-
-			ScanVariant temp(chunkSize - offset, &memory[offset], *member);
-			this->valueStruct.push_back(temp);
+			auto vmember = ScanVariant::FromRawBuffer(&buffer[offset], bufferSize - offset, *member);
+			v.valueStruct.push_back(vmember);
 			offset += member->getSize();
 		}
-		return;
+		return v;
 	}
-	else if (this->type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
+	else if (type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
 	{
+		// strings are variable length, can't pass farther
 		auto sizeInBytes = reference.valueAsciiString.length() * sizeof(std::string::value_type);
-		ASSERT(sizeInBytes <= chunkSize);
-		this->valueAsciiString =
-			std::string(
-				(std::string::value_type*)memory,
-				(std::string::value_type*)&memory[sizeInBytes]
-			);
+		auto value = std::string((std::string::value_type*)buffer, (std::string::value_type*)&buffer[sizeInBytes]);
+		return ScanVariant::FromString(value);
 	}
-	else if (this->type == ScanVariant::SCAN_VARIANT_WIDE_STRING)
+	else if (type == ScanVariant::SCAN_VARIANT_WIDE_STRING)
 	{
+		// same for wide strings
 		auto sizeInBytes = reference.valueWideString.length() * sizeof(std::wstring::value_type);
-		ASSERT(sizeInBytes <= chunkSize);
-		this->valueWideString =
-			std::wstring(
-				(std::wstring::value_type*)memory,
-				(std::wstring::value_type*)&memory[sizeInBytes]
-			);
+		auto value = std::wstring((std::wstring::value_type*)buffer, (std::wstring::value_type*)&buffer[sizeInBytes]);
+		return ScanVariant::FromString(value);
 	}
 	else
-	{
-		auto size = this->getTypeTraits()->getSize();
-		ASSERT(size <= chunkSize);
-		memcpy(&this->numericValue, &memory[0], size);
-	}
-
-	this->setSizeAndValue();
+		type = reference.getType();
+	return ScanVariant::FromRawBuffer(buffer, bufferSize, type);
 }
 
-ScanVariant::ScanVariant(const ptrdiff_t &value, const ScanVariantType &type)
+
+const ScanVariant ScanVariant::FromRawBuffer(const void* buffer, const size_t& bufferSize, const ScanVariantType& type)
 {
-	this->type = type;
-	ASSERT(this->type >= SCAN_VARIANT_NUMERICTYPES_BEGIN && this->type <= SCAN_VARIANT_NUMERICTYPES_END);
-	
-	auto size = this->getTypeTraits()->getSize();
-	ASSERT(sizeof(value) >= size);
-
-	memcpy(&this->numericValue, &value, size);
-	this->setSizeAndValue();
+	return ScanVariant::FromRawBuffer((uint8_t*)buffer, bufferSize, type);
+}
+const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariantType& type)
+{
+	return ScanVariant::FromNumberTyped(*(ptrdiff_t*)buffer, type);
 }
 
-ScanVariant::ScanVariant(const ScanVariant& min, const ScanVariant& max)
+const ScanVariant ScanVariant::FromVariantRange(const ScanVariant& min, const ScanVariant& max)
 {
 	ASSERT(min.getType() == max.getType());
 	ASSERT(min.getType() >= SCAN_VARIANT_NUMERICTYPES_BEGIN && min.getType() <= SCAN_VARIANT_NUMERICTYPES_END);
 
+	ScanVariant v;
 	auto offset = min.getType() - SCAN_VARIANT_NUMERICTYPES_BEGIN;
-	this->type = SCAN_VARIANT_RANGE_BEGIN + offset;
-	valueStruct.push_back(min);
-	valueStruct.push_back(max);
+	v.type = SCAN_VARIANT_RANGE_BEGIN + offset;
+	v.valueStruct.push_back(min);
+	v.valueStruct.push_back(max);
 
-	this->setSizeAndValue();
+	v.setSizeAndValue();
+	return v;
 }
 
-ScanVariant::ScanVariant(const MemoryAddress& valueMemoryAddress)
+const ScanVariant ScanVariant::FromMemoryAddress(const MemoryAddress& valueMemoryAddress)
 {
+	ScanVariant v;
 	if (sizeof(MemoryAddress) == sizeof(uint32_t))
 	{
-		this->valueuint32 = reinterpret_cast<uint32_t>(valueMemoryAddress);
-		this->type = SCAN_VARIANT_UINT32;
-		this->setSizeAndValue();
+		v.valueuint32 = reinterpret_cast<uint32_t>(valueMemoryAddress);
+		v.type = SCAN_VARIANT_UINT32;
+		v.setSizeAndValue();
 	}
 	else if (sizeof(MemoryAddress) == sizeof(uint64_t))
 	{
-		this->valueuint64 = reinterpret_cast<uint64_t>(valueMemoryAddress);
-		this->type = SCAN_VARIANT_UINT64;
-		this->setSizeAndValue();
+		v.valueuint64 = reinterpret_cast<uint64_t>(valueMemoryAddress);
+		v.type = SCAN_VARIANT_UINT64;
+		v.setSizeAndValue();
 	}
 	else
 	{
 		// what went wrong? did we change the MemoryAddress type?
 		ASSERT(false);
 	}
+	return v;
 }
+
+const ScanVariant ScanVariant::FromNumberTyped(const ptrdiff_t &value, const ScanVariantType &type)
+{
+	ASSERT(type >= SCAN_VARIANT_NUMERICTYPES_BEGIN && type <= SCAN_VARIANT_NUMERICTYPES_END);
+
+	ScanVariant v;
+	v.type = type;
+	
+	auto size = v.getTypeTraits()->getSize();
+	ASSERT(sizeof(value) >= size);
+
+	memcpy(&v.numericValue, &value, size);
+	v.setSizeAndValue();
+	return v;
+}
+
+const ScanVariant ScanVariant::FromStringTyped(const std::string& input, const ScanVariantType& type)
+{
+	std::wstring wideString(input.begin(), input.end());
+	return ScanVariant::FromStringTyped(wideString, type);
+}
+const ScanVariant ScanVariant::FromStringTyped(const std::wstring& input, const ScanVariantType& type)
+{
+	ASSERT(type >= SCAN_VARIANT_ALLTYPES_BEGIN && type <= SCAN_VARIANT_ALLTYPES_END);
+
+	auto traits = UnderlyingTypeTraits[type];
+	ScanVariant ret;
+	traits->fromString(input, ret);
+	return ret;
+}
+
 
 const std::wstring ScanVariant::getTypeName() const
 {
@@ -520,22 +525,4 @@ void ScanVariant::setSizeAndValue()
 		this->compareToBuffer = &ScanVariant::compareStructureToBuffer;
 	else
 		ASSERT(false); // didn't find a comparator!
-}
-
-
-ScanVariant ScanVariant::fromString(const std::string &input, const ScanVariantType type)
-{
-	std::wstring wideString(input.begin(), input.end());
-	return ScanVariant::fromString(wideString, type);
-}
-
-ScanVariant ScanVariant::fromString(const std::wstring &input, const ScanVariantType type)
-{
-	ASSERT(type >= SCAN_VARIANT_ALLTYPES_BEGIN && type <= SCAN_VARIANT_ALLTYPES_END);
-
-	auto traits = UnderlyingTypeTraits[type];
-
-	ScanVariant ret;
-	traits->fromString(input, ret);
-	return ret;
 }

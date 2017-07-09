@@ -3,12 +3,12 @@
 
 void ScanVariantUnderlyingAsciiStringTypeTraits::fromString(const std::wstring& input, ScanVariant& output) const
 {
-	output = ScanVariant(std::string(input.begin(), input.end()));
+	output = ScanVariant::FromString(std::string(input.begin(), input.end()));
 }
 
 void ScanVariantUnderlyingWideStringTypeTraits::fromString(const std::wstring& input, ScanVariant& output) const
 {
-	output = ScanVariant(input);
+	output = ScanVariant::FromString(input);
 }
 
 void ScanVariantUnderlyingStructureTypeTraits::fromString(const std::wstring& input, ScanVariant& output) const

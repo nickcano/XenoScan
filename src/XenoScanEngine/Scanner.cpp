@@ -39,7 +39,7 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 		auto range = this->typeRangeMap[type];
 		for (size_t i = range.low; i <= range.high; i++)
 		{
-			auto val = ScanVariant::fromString(rawValue, i);
+			auto val = ScanVariant::FromStringTyped(rawValue, i);
 			if (!val.isNull())
 				needles.push_back(val);
 		}
@@ -171,7 +171,7 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 				if (found == results.end())
 				{
 					ScanResultCollection temp;
-					temp.push_back(ScanVariant(chunkSize - *loc, &chunk[*loc], *needle));
+					temp.push_back(ScanVariant::FromRawBuffer(&chunk[*loc], chunkSize - *loc, *needle));
 					results.emplace(std::make_pair(resultLoc, temp));
 				}
 				else
@@ -224,7 +224,7 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 		{
 			auto res = needle->compareTo(buffer); 
 			if ((res & compType) != 0)
-				newResultValues.push_back(ScanVariant(bufferSize, buffer, *needle));
+				newResultValues.push_back(ScanVariant::FromRawBuffer(buffer, bufferSize, *needle));
 		}
 
 		if (newResultValues.size())

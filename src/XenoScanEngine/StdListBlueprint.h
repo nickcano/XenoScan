@@ -53,7 +53,7 @@ public:
 						if (size == walkedCount)
 						{
 							details.identifier = *object;
-							details.members[ItemCountTag] = size;
+							details.members[ItemCountTag] = ScanVariant::FromNumber(size);
 							return true;
 						}
 					}

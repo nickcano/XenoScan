@@ -52,26 +52,46 @@ public:
 		SCAN_VARIANT_PLACEHOLDER_END = (SCAN_VARIANT_PLACEHOLDER_BEGIN + (SCAN_VARIANT_NUMERICTYPES_END - SCAN_VARIANT_NUMERICTYPES_BEGIN)),
 	};
 
-	static ScanVariant MakePlaceholder(ScanVariantType type);
 
-	ScanVariant(const size_t &chunkSize, const uint8_t* memory, const ScanVariant &reference);
-	ScanVariant(const ptrdiff_t &value, const ScanVariantType &type);
-	ScanVariant(const ScanVariant& min, const ScanVariant& max);
-	ScanVariant(const MemoryAddress& valueMemoryAddress);
-	ScanVariant(std::string valueAsciiString)                   : valueAsciiString(valueAsciiString),     type(SCAN_VARIANT_ASCII_STRING) { setSizeAndValue(); }
-	ScanVariant(std::wstring valueWideString)                   : valueWideString(valueWideString),       type(SCAN_VARIANT_WIDE_STRING) { setSizeAndValue(); }
-	ScanVariant(uint8_t valueuint8)                             : valueuint8(valueuint8),                 type(SCAN_VARIANT_UINT8) { setSizeAndValue(); }
-	ScanVariant(int8_t valueint8)                               : valueint8(valueint8),                   type(SCAN_VARIANT_INT8) { setSizeAndValue(); }
-	ScanVariant(uint16_t valueuint16)                           : valueuint16(valueuint16),               type(SCAN_VARIANT_UINT16) { setSizeAndValue(); }
-	ScanVariant(int16_t valueint16)                             : valueint16(valueint16),                 type(SCAN_VARIANT_INT16) { setSizeAndValue(); }
-	ScanVariant(uint32_t valueuint32)                           : valueuint32(valueuint32),               type(SCAN_VARIANT_UINT32) { setSizeAndValue(); }
-	ScanVariant(int32_t valueint32)                             : valueint32(valueint32),                 type(SCAN_VARIANT_INT32) { setSizeAndValue(); }
-	ScanVariant(uint64_t valueuint64)                           : valueuint64(valueuint64),               type(SCAN_VARIANT_UINT64) { setSizeAndValue(); }
-	ScanVariant(int64_t valueint64)                             : valueint64(valueint64),                 type(SCAN_VARIANT_INT64) { setSizeAndValue(); }
-	ScanVariant(double valueDouble)                             : valueDouble(valueDouble),               type(SCAN_VARIANT_DOUBLE) { setSizeAndValue(); }
-	ScanVariant(float valueFloat)                               : valueFloat(valueFloat),                 type(SCAN_VARIANT_FLOAT) { setSizeAndValue(); }
-	ScanVariant(const std::vector<ScanVariant> &valueStruct)    : valueStruct(valueStruct),               type(SCAN_VARIANT_STRUCTURE) { setSizeAndValue(); }
-	ScanVariant()                                               :                                         type(SCAN_VARIANT_NULL) { }
+	ScanVariant() : type(SCAN_VARIANT_NULL) { }
+
+	static const ScanVariant MakePlaceholder(const ScanVariantType& type);
+
+	static const ScanVariant FromRawBuffer(const void* buffer,    const size_t& bufferSize, const ScanVariant& reference);
+	static const ScanVariant FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariant& reference);
+	static const ScanVariant FromRawBuffer(const void* buffer,    const size_t& bufferSize, const ScanVariantType& type);
+	static const ScanVariant FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariantType& type);
+
+	static const ScanVariant FromVariantRange(const ScanVariant& min, const ScanVariant& max);
+	static const ScanVariant FromMemoryAddress(const MemoryAddress& valueMemoryAddress);
+	static const ScanVariant FromNumberTyped(const ptrdiff_t& value, const ScanVariantType& type);
+
+	static const ScanVariant FromStringTyped(const std::string& input,  const ScanVariantType& type);
+	static const ScanVariant FromStringTyped(const std::wstring& input, const ScanVariantType& type);
+
+
+#define SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(TYPENAME, TYPE, VALUENAME, TYPEIDENTIFIER) \
+	static const ScanVariant From ## TYPENAME(const TYPE& VALUENAME) \
+	{ \
+		ScanVariant v;\
+		v.VALUENAME = VALUENAME;\
+		v.type = TYPEIDENTIFIER;\
+		v.setSizeAndValue();\
+		return v;\
+	}
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint8_t, valueuint8, SCAN_VARIANT_UINT8);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int8_t,                    valueint8,         SCAN_VARIANT_INT8);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint16_t,                  valueuint16,       SCAN_VARIANT_UINT16);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int16_t,                   valueint16,        SCAN_VARIANT_INT16);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint32_t,                  valueuint32,       SCAN_VARIANT_UINT32);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int32_t,                   valueint32,        SCAN_VARIANT_INT32);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, uint64_t,                  valueuint64,       SCAN_VARIANT_UINT64);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int64_t,                   valueint64,        SCAN_VARIANT_INT64);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, double,                    valueDouble,       SCAN_VARIANT_DOUBLE);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, float,                     valueFloat,        SCAN_VARIANT_FLOAT);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Struct, std::vector<ScanVariant>,  valueStruct,       SCAN_VARIANT_STRUCTURE);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::string,               valueAsciiString,  SCAN_VARIANT_ASCII_STRING);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::wstring,              valueWideString,   SCAN_VARIANT_WIDE_STRING);
 
 
 	inline const size_t getSize() const
@@ -162,9 +182,6 @@ public:
 		const CompareTypeFlags &compType,
 		const MemoryAddress &startAddress,
 		std::vector<size_t> &locations) const;
-
-	static ScanVariant fromString(const std::string &input, const ScanVariantType type);
-	static ScanVariant fromString(const std::wstring &input, const ScanVariantType type);
 
 private:
 	static ScanVariantUnderlyingTypeTraits* UnderlyingTypeTraits[SCAN_VARIANT_NULL + 1];

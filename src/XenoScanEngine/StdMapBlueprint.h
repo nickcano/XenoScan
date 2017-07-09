@@ -182,7 +182,7 @@ private:
 			if (right != details.identifier) toSearch.push(right);
 		}
 
-		details.members[ItemCountTag] = searched.size();
+		details.members[ItemCountTag] = ScanVariant::FromNumber(searched.size());
 		return true;
 	}
 };

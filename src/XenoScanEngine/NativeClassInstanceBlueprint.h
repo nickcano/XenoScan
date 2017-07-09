@@ -50,7 +50,7 @@ public:
 						{
 							DataStructureDetails details;
 							details.identifier = instanceAddress;
-							details.members[VFTableTag] = ptrItr->first;
+							details.members[VFTableTag] = ScanVariant::FromMemoryAddress(ptrItr->first);
 							results[this->getTypeName()][instanceAddress] = details;
 						}
 					}

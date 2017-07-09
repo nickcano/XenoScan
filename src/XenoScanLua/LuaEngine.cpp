@@ -72,7 +72,7 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 			if (memberValue.length() == 0)
 				return false;
 
-			output = ScanVariant::fromString(memberValue, type);
+			output = ScanVariant::FromStringTyped(memberValue, type);
 			return true;
 		}
 	case LUA_VARIANT_INT:
@@ -83,7 +83,7 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 
 			LuaVariant::LuaVariantInt memberValueInt;
 			variant.getAsInt(memberValueInt);
-			output = ScanVariant(memberValueInt, type);
+			output = ScanVariant::FromNumberTyped(memberValueInt, type);
 			return true;
 		}
 	case LUA_VARIANT_KTABLE:
@@ -104,9 +104,9 @@ bool LuaEngine::getScanVariantFromLuaVariant(const LuaVariant &variant, const Sc
 				if (!itMin->second.getAsInt(minValue)) return false;
 				if (!itMax->second.getAsInt(maxValue)) return false;
 
-				auto min = ScanVariant(minValue, type);
-				auto max = ScanVariant(maxValue, type);
-				output = ScanVariant(min, max);
+				auto min = ScanVariant::FromNumberTyped(minValue, type);
+				auto max = ScanVariant::FromNumberTyped(maxValue, type);
+				output = ScanVariant::FromVariantRange(min, max);
 				return true;
 			}
 

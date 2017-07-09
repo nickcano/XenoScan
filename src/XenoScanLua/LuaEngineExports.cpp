@@ -253,7 +253,7 @@ int LuaEngine::runScan()
 
 			members.push_back(member);
 		}
-		needle = ScanVariant(members);
+		needle = ScanVariant::FromStruct(members);
 	}
 	else
 	{
