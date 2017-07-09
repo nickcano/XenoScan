@@ -224,7 +224,7 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 		{
 			auto res = needle->compareTo(buffer); 
 			if ((res & compType) != 0)
-				newResultValues.push_back(ScanVariant(buffer, *needle));
+				newResultValues.push_back(ScanVariant(bufferSize, buffer, *needle));
 		}
 
 		if (newResultValues.size())
