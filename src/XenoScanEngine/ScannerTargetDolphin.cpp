@@ -30,10 +30,13 @@ bool ScannerTargetDolphin::attach(const ProcessIdentifier &pid)
 	if (this->isAttached())
 		return true;
 
+	// get handle to shared segment
 	this->sharedMemoryHandle = ScannerTargetDolphin::obtainSHMHandle();
 	if (!this->sharedMemoryHandle)
 		return false;
 
+	// collect or views
+	// TODO: make resemble the real memory map
 	auto ramView = obtainView(this->sharedMemoryHandle, 0, 0x01800000);
 	if (!ramView)
 	{
@@ -41,6 +44,13 @@ bool ScannerTargetDolphin::attach(const ProcessIdentifier &pid)
 		return false;
 	}
 	this->views.push_back(MemoryView(0, 0x01800000, (uint8_t*)ramView));
+
+	// set our ranges
+	this->highestAddress = 0;
+	this->lowestAddress = 0;
+	for (auto view = this->views.cbegin(); view != this->views.cend(); view++)
+		if (view->end > this->highestAddress)
+			this->highestAddress = view->end;
 
 	// we good!
 	return true;

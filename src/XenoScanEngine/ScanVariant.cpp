@@ -17,7 +17,7 @@ void ScanVariantUnderlyingNumericTypeTraits<TYPE, UNSIGNED, FLOATING>::fromStrin
 		return;
 	}
 	memcpy(&value, &buffer[0], sizeof(value));
-	output = ScanVariant();
+	output = ScanVariant(value);
 }
 
 ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::SCAN_VARIANT_NULL + 1] =

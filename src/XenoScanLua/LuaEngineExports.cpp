@@ -40,7 +40,7 @@ LUAENGINE_EXPORT_VALUE(int32_t, SCAN_VARIANT_STRUCTURE,                  ScanVar
 LUAENGINE_EXPORT_FACTORY_KEYS(ScannerTarget::FACTORY_TYPE, ScannerTarget::Factory, ATTACH_TARGET_NAMES);
 
 
-LUAENGINE_EXPORT_FUNCTION(attach, "attach"); // attach(pid)
+LUAENGINE_EXPORT_FUNCTION(attach, "attach"); // attach(type, pid)
 int LuaEngine::attach()
 {
 	auto args = this->getArguments<LUA_VARIANT_STRING, LUA_VARIANT_INT>();
@@ -156,6 +156,7 @@ int LuaEngine::memoryReadString()
 	args[1].getAsPointer(address);
 
 	// scan
+	// TODO: this sucks. fix.
 	std::string ret = "";
 	int8_t chr = 0x00;
 	while ((chr = scanner->target->read<int8_t>(address)) != 0x00)
