@@ -58,7 +58,7 @@ struct ScanResultMapComparator
 {
 
 	//TODO: this needs to be more robust and less slow
-	inline bool operator()(const ScanResultLocationShPtr& a, const ScanResultLocationShPtr& b)
+	inline bool operator()(const ScanResultLocationShPtr& a, const ScanResultLocationShPtr& b) const
 	{
 		ASSERT(a.get() && b.get());
 		return a->toString() < b->toString();

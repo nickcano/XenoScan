@@ -10,7 +10,7 @@
 class StdMapBlueprint : public DataStructureBlueprint
 {
 public:
-	static const std::string Key;
+	static DataStructureBlueprint::FACTORY_TYPE::KEY_TYPE Key;
 
 	inline virtual bool walkStructure(
 		const ScannerTargetShPtr &target,

@@ -9,7 +9,7 @@ template<typename CRTP>
 class ScannerTargetHelper
 {
 public:
-	typedef KeyedFactory<const std::string, CRTP> FACTORY_TYPE;
+	typedef KeyedFactory<std::string, CRTP> FACTORY_TYPE;
 
 	template<typename T>
 	inline T read(const MemoryAddress &adr) const
@@ -57,7 +57,7 @@ public:
 		return static_cast<const CRTP*>(this)->littleEndian;
 	}
 
-	inline const std::set<const std::string>& getSupportedBlueprints() const
+	inline const std::set<std::string>& getSupportedBlueprints() const
 	{
 		return static_cast<const CRTP*>(this)->supportedBlueprints;
 	}

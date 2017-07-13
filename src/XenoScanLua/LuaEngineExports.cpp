@@ -213,7 +213,7 @@ int LuaEngine::runScan()
 
 		// the structure, before it becomes a variant,
 		// will end up in here
-		std::vector<const ScanVariant> members;
+		std::vector<ScanVariant> members;
 
 		// look up the schema table, which contains
 		// the list of objects (with name and type)

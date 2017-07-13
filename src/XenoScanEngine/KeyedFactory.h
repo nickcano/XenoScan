@@ -41,7 +41,7 @@ class KeyedFactory
 {
 friend class KeyedProducerBase<K, A>;
 public:
-	typedef const K KEY_TYPE;
+	typedef K KEY_TYPE;
 	typedef A BASE_TYPE;
 
 	KeyedFactory() {}
@@ -53,21 +53,21 @@ public:
 		return nullptr;
 	}
 
-	const std::set<const KEY_TYPE> getKeys() const
+	const std::set<KEY_TYPE> getKeys() const
 	{
-		std::set<const KEY_TYPE> ret;
+		std::set<KEY_TYPE> ret;
 		for (auto prod = this->producers.cbegin(); prod != this->producers.cend(); prod++)
 			ret.insert(prod->first);
 		return ret;
 	}
 
 protected:
-	void registerProducer(const KeyedProducerBase<K, A>* producer)
+	void registerProducer(KeyedProducerBase<K, A>* producer)
 	{
 		producers[producer->getKey()] = producer;
 	}
 private:
-	std::map<const K, const KeyedProducerBase<K, A>*> producers;
+	std::map<K, KeyedProducerBase<K, A>*> producers;
 };
 
 #define CREATE_FACTORY(CLASS) CLASS::FACTORY_TYPE CLASS::Factory;

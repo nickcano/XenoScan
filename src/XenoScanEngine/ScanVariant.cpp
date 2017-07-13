@@ -193,7 +193,7 @@ const bool ScanVariant::isComposite() const
 {
 	return this->getTypeTraits()->isStructureType();
 }
-const std::vector<const ScanVariant>& ScanVariant::getCompositeValues() const
+const std::vector<ScanVariant>& ScanVariant::getCompositeValues() const
 {
 	return this->valueStruct;
 }
@@ -328,7 +328,7 @@ const bool ScanVariant::getValue(float &value) const
 	return false;
 }
 
-const bool ScanVariant::getValue(std::vector<const ScanVariant> &value) const
+const bool ScanVariant::getValue(std::vector<ScanVariant> &value) const
 {
 	if (this->type == SCAN_VARIANT_STRUCTURE)
 	{

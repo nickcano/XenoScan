@@ -25,7 +25,7 @@ protected:
 	bool littleEndian;
 	size_t pointerSize, chunkSize;
 	MemoryAddress lowestAddress, highestAddress;
-	std::set<const std::string> supportedBlueprints;
+	std::set<std::string> supportedBlueprints;
 
 	virtual bool rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const = 0;
 	virtual bool rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const = 0;

@@ -86,7 +86,7 @@ public:
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int64_t,                         valueint64,        SCAN_VARIANT_INT64);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, double,                          valueDouble,       SCAN_VARIANT_DOUBLE);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, float,                           valueFloat,        SCAN_VARIANT_FLOAT);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Struct, std::vector<const ScanVariant>,  valueStruct,       SCAN_VARIANT_STRUCTURE);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Struct, std::vector<ScanVariant>,  valueStruct,       SCAN_VARIANT_STRUCTURE);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::string,                     valueAsciiString,  SCAN_VARIANT_ASCII_STRING);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::wstring,                    valueWideString,   SCAN_VARIANT_WIDE_STRING);
 
@@ -119,7 +119,7 @@ public:
 	const std::wstring toString() const;
 
 	const bool isComposite() const;
-	const std::vector<const ScanVariant>& getCompositeValues() const;
+	const std::vector<ScanVariant>& getCompositeValues() const;
 
 	inline const bool isStructure() const
 	{
@@ -148,7 +148,7 @@ public:
 	const bool getValue(int64_t &value) const;
 	const bool getValue(double &value) const;
 	const bool getValue(float &value) const;
-	const bool getValue(std::vector<const ScanVariant> &value) const;
+	const bool getValue(std::vector<ScanVariant> &value) const;
 
 	/*
 		This is safe IF and ONLY IF the caller takes some precautions:
@@ -188,7 +188,7 @@ private:
 	ScanVariantType type;
 	std::string valueAsciiString;
 	std::wstring valueWideString;
-	std::vector<const ScanVariant> valueStruct;
+	std::vector<ScanVariant> valueStruct;
 	union
 	{
 		uint8_t numericValue;
