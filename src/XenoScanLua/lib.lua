@@ -8,7 +8,6 @@ function table.icontains(t, val)
 end
 
 
-
 ATTACHED_PROCESSES = {}
 Process = {}
 Process.__index = Process

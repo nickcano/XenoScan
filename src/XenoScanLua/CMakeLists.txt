@@ -47,12 +47,17 @@ source_group("Headers\\Tests"       FILES ${HEADER_TEST_FILES})
 
 
 file(GLOB LUA_COPY_FILES "*.lua")
-add_custom_target(XenoScanLuaCopyFiles)
-get_target_property(XenoScanLuaLocation XenoScanLua LOCATION)
-get_filename_component(XenoScanLuaDir ${XenoScanLuaLocation} PATH)
+set(XenoScanLuaDir $<TARGET_FILE_DIR:XenoScanLua>)
+
+add_custom_target(
+    XenoScanLuaCopyFiles ALL
+)
 foreach(LUA_FILE ${LUA_COPY_FILES})
-  add_custom_command(TARGET XenoScanLuaCopyFiles PRE_BUILD
-                     COMMAND ${CMAKE_COMMAND} -E
-                         copy ${LUA_FILE} ${XenoScanLuaDir})
+    get_filename_component(LUA_FILE_BASE ${LUA_FILE} PATH)
+    add_custom_command(
+        TARGET XenoScanLuaCopyFiles PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LUA_FILE} ${XenoScanLuaDir}
+        DEPENDS ${LUA_FILE}
+        VERBATIM
+    )
 endforeach()
-add_dependencies(XenoScanLua XenoScanLuaCopyFiles)
