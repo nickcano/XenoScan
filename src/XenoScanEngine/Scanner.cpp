@@ -236,7 +236,8 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 	std::mutex mutex;
 	ScanResultMap results;
 	ScanResultAddressAllocator resLocAllocator;
-	auto scanChunk = [needles, compType, &mutex, &resLocAllocator, &results]
+	bool isLittleEndian = target->isLittleEndian();
+	auto scanChunk = [needles, compType, isLittleEndian, &mutex, &resLocAllocator, &results]
 					(const MemoryAddress &baseAddress, const uint8_t* chunk, const size_t &chunkSize)
 					-> void
 	{
@@ -245,7 +246,7 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 		for (auto needle = needles.cbegin(); needle != needles.cend(); needle++)
 		{
 			locations.clear();
-			needle->searchForMatchesInChunk(chunk, chunkSize, compType, baseAddress, locations);
+			needle->searchForMatchesInChunk(chunk, chunkSize, compType, baseAddress, isLittleEndian, locations);
 			for (auto loc = locations.cbegin(); loc != locations.cend(); loc++)
 			{
 				auto resultLoc =
@@ -264,7 +265,7 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 				if (found == results.end())
 				{
 					ScanResultCollection temp;
-					temp.push_back(ScanVariant::FromRawBuffer(&chunk[*loc], chunkSize - *loc, *needle));
+					temp.push_back(ScanVariant::FromRawBuffer(&chunk[*loc], chunkSize - *loc, isLittleEndian, *needle));
 					results.emplace(std::make_pair(resultLoc, temp));
 				}
 				else
@@ -286,6 +287,7 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 	// this will end badly. Fix.
 	size_t bufferSize = 0x1000;
 	uint8_t* buffer = new uint8_t[bufferSize];
+	bool isLittleEndian = target->isLittleEndian();
 	for (auto resultLocation = this->scanState->beginResult(); resultLocation != this->scanState->endResult(); resultLocation++)
 	{
 		size_t bytesToRead = 0;
@@ -316,9 +318,9 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 
 		for (auto needle = searchNeedles.begin(); needle != searchNeedles.end(); needle++)
 		{
-			auto res = needle->compareTo(buffer); 
+			auto res = needle->compareTo(buffer, isLittleEndian);
 			if ((res & compType) != 0)
-				newResultValues.push_back(ScanVariant::FromRawBuffer(buffer, bufferSize, *needle));
+				newResultValues.push_back(ScanVariant::FromRawBuffer(buffer, bufferSize, isLittleEndian, *needle));
 		}
 
 		if (newResultValues.size())

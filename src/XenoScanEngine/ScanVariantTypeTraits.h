@@ -9,6 +9,8 @@ class ScanVariantUnderlyingTypeTraits
 {
 public:
 	virtual const ScanVariantComparator getComparator() const = 0;
+	virtual const ScanVariantComparator getBigEndianComparator() const = 0;
+	virtual const void copyFromBuffer(const uint8_t* buffer, const size_t &size, const bool &isLittleEndian, void* output) const = 0;
 	virtual const size_t getSize() const = 0;
 	virtual const size_t getAlignment() const = 0;
 	virtual const std::wstring getName() const = 0;
@@ -38,13 +40,16 @@ public:
 
 	inline virtual const ScanVariantComparator getComparator() const
 	{
-		if (FLOATING || !UNSIGNED)
-			return &signedNumericComparator<TYPE>;
-		else if (UNSIGNED)
-			return &unsignedNumericComparator<sizeof(TYPE)>;
-		
-		ASSERT(false); // shouldn't happen
-		return nullptr;
+		return &numericComparator<TYPE>;
+	}
+	inline virtual const ScanVariantComparator getBigEndianComparator() const
+	{
+		return &bigEndianNumericComparator<TYPE>;
+	}
+	inline virtual const void copyFromBuffer(const uint8_t* buffer, const size_t &size, const bool &isLittleEndian, void* output) const
+	{
+		// TODO maybe ASSERT(size == sizeof(TYPE));
+		*(TYPE*)output = isLittleEndian ? *(TYPE*)buffer : swapEndianness(*(TYPE*)buffer);
 	}
 	inline virtual const size_t getSize() const { return sizeof(TYPE); }
 	inline virtual const size_t getAlignment() const { return ALIGNOF(TYPE); }
@@ -78,6 +83,11 @@ public:
 	virtual ~ScanVariantUnderlyingAsciiStringTypeTraits() {}
 
 	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
+	inline virtual const ScanVariantComparator getBigEndianComparator() const { return nullptr; }
+	inline virtual const void copyFromBuffer(const uint8_t* buffer, const size_t &size, const bool &isLittleEndian, void* output) const
+	{
+		*(std::string*)output = std::string((std::string::value_type*)buffer, (std::string::value_type*)&buffer[size]);
+	}
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 1; }
 	inline virtual const std::wstring getName() const { return L"ascii string"; }
@@ -103,6 +113,11 @@ public:
 	virtual ~ScanVariantUnderlyingWideStringTypeTraits() {}
 
 	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
+	inline virtual const ScanVariantComparator getBigEndianComparator() const { return nullptr; }
+	inline virtual const void copyFromBuffer(const uint8_t* buffer, const size_t &size, const bool &isLittleEndian, void* output) const
+	{
+		*(std::wstring*)output = std::wstring((std::wstring::value_type*)buffer, (std::wstring::value_type*)&buffer[size]);
+	}
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 1; }
 	inline virtual const std::wstring getName() const { return L"wide string"; }
@@ -127,6 +142,11 @@ public:
 	virtual ~ScanVariantUnderlyingStructureTypeTraits() {}
 
 	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
+	inline virtual const ScanVariantComparator getBigEndianComparator() const { return nullptr; }
+	inline virtual const void copyFromBuffer(const uint8_t* buffer, const size_t &size, const bool &isLittleEndian, void* output) const
+	{
+		// TODO maybe assert false?
+	}
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 1; }
 	inline virtual const std::wstring getName() const { return L"struct"; }
@@ -151,6 +171,11 @@ public:
 	virtual ~ScanVariantUnderlyingNullTypeTraits() {}
 
 	inline virtual const ScanVariantComparator getComparator() const { return nullptr; }
+	inline virtual const ScanVariantComparator getBigEndianComparator() const { return nullptr; }
+	inline virtual const void copyFromBuffer(const uint8_t* buffer, const size_t &size, const bool &isLittleEndian, void* output) const
+	{
+		// TODO maybe assert false?
+	}
 	inline virtual const size_t getSize() const { return 0; }
 	inline virtual const size_t getAlignment() const { return 4; }
 	inline virtual const std::wstring getName() const { return L"null"; }

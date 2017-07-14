@@ -57,14 +57,14 @@ const ScanVariant ScanVariant::MakePlaceholder(const ScanVariantType& type)
 	return temp;
 }
 
-const ScanVariant ScanVariant::FromRawBuffer(const void* buffer, const size_t& bufferSize, const ScanVariant& reference)
+const ScanVariant ScanVariant::FromRawBuffer(const void* buffer, const size_t& bufferSize, const bool &isLittleEndian, const ScanVariant& reference)
 {
-	return ScanVariant::FromRawBuffer((uint8_t*)buffer, bufferSize, reference);
+	return ScanVariant::FromRawBuffer((uint8_t*)buffer, bufferSize, isLittleEndian, reference);
 }
-const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariant& reference)
+const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const bool &isLittleEndian, const ScanVariant& reference)
 {
 	if (reference.isRange())
-		return ScanVariant::FromRawBuffer(buffer, bufferSize, reference.valueStruct[0]);
+		return ScanVariant::FromRawBuffer(buffer, bufferSize, isLittleEndian, reference.valueStruct[0]);
 	else if (reference.isStructure())
 	{
 		// structure requires access to the reference variant for member and type information
@@ -73,7 +73,7 @@ const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t
 		size_t offset = 0;
 		for (auto member = reference.valueStruct.begin(); member != reference.valueStruct.end(); member++)
 		{
-			auto vmember = ScanVariant::FromRawBuffer(&buffer[offset], bufferSize - offset, *member);
+			auto vmember = ScanVariant::FromRawBuffer(&buffer[offset], bufferSize - offset, isLittleEndian, *member);
 			v.valueStruct.push_back(vmember);
 			offset += member->getSize();
 		}
@@ -83,17 +83,19 @@ const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t
 	else if (reference.getType() == ScanVariant::SCAN_VARIANT_ASCII_STRING)
 	{
 		auto sizeInBytes = reference.valueAsciiString.length() * sizeof(std::string::value_type); // todo maybe use the build in value size field
-
 		ASSERT(sizeInBytes <= bufferSize);
-		auto value = std::string((std::string::value_type*)buffer, (std::string::value_type*)&buffer[sizeInBytes]);
+
+		std::string value;
+		reference.getTypeTraits()->copyFromBuffer(buffer, sizeInBytes, isLittleEndian, &value);
 		return ScanVariant::FromString(value);
 	}
 	else if (reference.getType() == ScanVariant::SCAN_VARIANT_WIDE_STRING)
 	{
 		auto sizeInBytes = reference.valueWideString.length() * sizeof(std::wstring::value_type); // same as above
-
 		ASSERT(sizeInBytes <= bufferSize);
-		auto value = std::wstring((std::wstring::value_type*)buffer, (std::wstring::value_type*)&buffer[sizeInBytes]);
+
+		std::wstring value;
+		reference.getTypeTraits()->copyFromBuffer(buffer, sizeInBytes, isLittleEndian, &value);
 		return ScanVariant::FromString(value);
 	}
 	else
@@ -103,10 +105,11 @@ const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t
 		if (reference.isPlaceholder())
 			v.type = (reference.getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN) + SCAN_VARIANT_NUMERICTYPES_BEGIN;
 
-		auto size = v.getTypeTraits()->getSize();
+		auto traits = v.getTypeTraits();
+		auto size = traits->getSize();
 		ASSERT(size <= bufferSize);
 
-		memcpy(&v.numericValue, &buffer[0], size);
+		traits->copyFromBuffer(buffer, size, isLittleEndian, &v.numericValue);
 		v.setSizeAndValue();
 		return v;
 	}
@@ -343,6 +346,7 @@ void ScanVariant::searchForMatchesInChunk(
 		const size_t &chunkSize,
 		const CompareTypeFlags &compType,
 		const MemoryAddress &startAddress,
+		const bool &isLittleEndian,
 		std::vector<size_t> &locations) const
 {
 	ASSERT(this->valueSize > 0);
@@ -355,7 +359,7 @@ void ScanVariant::searchForMatchesInChunk(
 	size_t startOffset = (chunkAlignment == 0) ? 0 : desiredAlignment - chunkAlignment;
 	size_t scanEndAt = chunkSize - this->valueSize;
 
-	auto comp = traits->getComparator();
+	auto comp = isLittleEndian ? traits->getComparator() : traits->getBigEndianComparator();
 	auto size = this->valueSize;
 	auto numericValue = &this->numericValue;
 	auto asciiValue = this->valueAsciiString.c_str();
@@ -365,6 +369,7 @@ void ScanVariant::searchForMatchesInChunk(
 	{
 		auto res = this->compareToBuffer(
 			this, comp, size,
+			isLittleEndian,
 			numericValue,
 			asciiValue, wideValue,
 			&chunk[i]
@@ -386,6 +391,7 @@ const CompareTypeFlags ScanVariant::compareRangeToBuffer(
 	const ScanVariant* const obj,
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
+	const bool &isLittleEndian,
 	const void* const numericBuffer,
 	const void* const asciiBuffer,
 	const void* const wideBuffer,
@@ -403,6 +409,7 @@ const CompareTypeFlags ScanVariant::compareNumericToBuffer(
 	const ScanVariant* const obj,
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
+	const bool &isLittleEndian,
 	const void* const numericBuffer,
 	const void* const asciiBuffer,
 	const void* const wideBuffer,
@@ -415,6 +422,7 @@ const CompareTypeFlags ScanVariant::comparePlaceholderToBuffer(
 	const ScanVariant* const obj,
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
+	const bool &isLittleEndian,
 	const void* const numericBuffer,
 	const void* const asciiBuffer,
 	const void* const wideBuffer,
@@ -426,6 +434,7 @@ const CompareTypeFlags ScanVariant::compareStructureToBuffer(
 	const ScanVariant* const obj,
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
+	const bool &isLittleEndian,
 	const void* const numericBuffer,
 	const void* const asciiBuffer,
 	const void* const wideBuffer,
@@ -437,7 +446,7 @@ const CompareTypeFlags ScanVariant::compareStructureToBuffer(
 	for (size_t i = 0; i < iterations; i++)
 	{
 		auto innerObj = &obj->valueStruct[i];
-		auto res = innerObj->compareTo(&buf[offset]);
+		auto res = innerObj->compareTo(&buf[offset], isLittleEndian);
 		if (!(res & Scanner::SCAN_COMPARE_EQUALS)
 			&& !(res & Scanner::SCAN_COMPARE_ALWAYS_MATCH))
 		{
@@ -451,6 +460,7 @@ const CompareTypeFlags ScanVariant::compareAsciiStringToBuffer(
 	const ScanVariant* const obj,
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
+	const bool &isLittleEndian,
 	const void* const numericBuffer,
 	const void* const asciiBuffer,
 	const void* const wideBuffer,
@@ -472,6 +482,7 @@ const CompareTypeFlags ScanVariant::compareWideStringToBuffer(
 	const ScanVariant* const obj,
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
+	const bool &isLittleEndian,
 	const void* const numericBuffer,
 	const void* const asciiBuffer,
 	const void* const wideBuffer,

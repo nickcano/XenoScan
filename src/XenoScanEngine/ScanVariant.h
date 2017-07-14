@@ -56,8 +56,8 @@ public:
 	static const ScanVariant MakeNull() { ScanVariant v; v.setSizeAndValue(); return v; } 
 	static const ScanVariant MakePlaceholder(const ScanVariantType& type);
 
-	static const ScanVariant FromRawBuffer(const void* buffer,    const size_t& bufferSize, const ScanVariant& reference);
-	static const ScanVariant FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const ScanVariant& reference);
+	static const ScanVariant FromRawBuffer(const void* buffer,    const size_t& bufferSize, const bool &isLittleEndian, const ScanVariant& reference);
+	static const ScanVariant FromRawBuffer(const uint8_t* buffer, const size_t& bufferSize, const bool &isLittleEndian, const ScanVariant& reference);
 
 	static const ScanVariant FromVariantRange(const ScanVariant& min, const ScanVariant& max);
 	static const ScanVariant FromMemoryAddress(const MemoryAddress& valueMemoryAddress);
@@ -86,7 +86,7 @@ public:
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, int64_t,                         valueint64,        SCAN_VARIANT_INT64);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, double,                          valueDouble,       SCAN_VARIANT_DOUBLE);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Number, float,                           valueFloat,        SCAN_VARIANT_FLOAT);
-	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Struct, std::vector<ScanVariant>,  valueStruct,       SCAN_VARIANT_STRUCTURE);
+	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(Struct, std::vector<ScanVariant>,        valueStruct,       SCAN_VARIANT_STRUCTURE);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::string,                     valueAsciiString,  SCAN_VARIANT_ASCII_STRING);
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::wstring,                    valueWideString,   SCAN_VARIANT_WIDE_STRING);
 
@@ -160,12 +160,13 @@ public:
 			Realistically, when possible, we should try not to use ScanVariant::compareTo
 	*/
 	// TODO: test string scans, test all integer type scans
-	inline const CompareTypeFlags compareTo(const uint8_t* memory) const
+	inline const CompareTypeFlags compareTo(const uint8_t* memory, const bool &isLittleEndian) const
 	{
 		return this->compareToBuffer(
 			this,
-			this->getTypeTraits()->getComparator(),
+			isLittleEndian ? this->getTypeTraits()->getComparator() : this->getTypeTraits()->getBigEndianComparator(),
 			this->valueSize,
+			isLittleEndian,
 			&this->numericValue,
 			this->valueAsciiString.c_str(),
 			this->valueWideString.c_str(),
@@ -178,6 +179,7 @@ public:
 		const size_t &chunkSize,
 		const CompareTypeFlags &compType,
 		const MemoryAddress &startAddress,
+		const bool &isLittleEndian,
 		std::vector<size_t> &locations) const;
 
 private:
@@ -212,6 +214,7 @@ private:
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
+		const bool &isLittleEndian,
 		const void* const numericBuffer,
 		const void* const asciiBuffer,
 		const void* const wideBuffer,
@@ -222,6 +225,7 @@ private:
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
+		const bool &isLittleEndian,
 		const void* const numericBuffer,
 		const void* const asciiBuffer,
 		const void* const wideBuffer,
@@ -230,6 +234,7 @@ private:
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
+		const bool &isLittleEndian,
 		const void* const numericBuffer,
 		const void* const asciiBuffer,
 		const void* const wideBuffer,
@@ -238,6 +243,7 @@ private:
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
+		const bool &isLittleEndian,
 		const void* const numericBuffer,
 		const void* const asciiBuffer,
 		const void* const wideBuffer,
@@ -246,6 +252,7 @@ private:
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
+		const bool &isLittleEndian,
 		const void* const numericBuffer,
 		const void* const asciiBuffer,
 		const void* const wideBuffer,
@@ -254,6 +261,7 @@ private:
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
+		const bool &isLittleEndian,
 		const void* const numericBuffer,
 		const void* const asciiBuffer,
 		const void* const wideBuffer,
@@ -262,6 +270,7 @@ private:
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
+		const bool &isLittleEndian,
 		const void* const numericBuffer,
 		const void* const asciiBuffer,
 		const void* const wideBuffer,
