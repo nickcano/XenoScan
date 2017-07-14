@@ -5,6 +5,11 @@
 
 #include <algorithm>
 #include <sstream>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <chrono>
+#include <stack>
 
 Scanner::Scanner() : scanState(nullptr)
 {
@@ -93,48 +98,132 @@ void Scanner::calculateBoundsOfBlocks(const ScannerTargetShPtr &target, const Me
 
 void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryInformationCollection &blocks, blockIterationCallback callback) const
 {
+	// find out how many threads we can run
+	auto concurentThreadsSupported = std::thread::hardware_concurrency();
+	if (concurentThreadsSupported <= 0)
+		concurentThreadsSupported = 2; // TODO: maybe fix
+
+	// define some common variables
+	auto start = std::chrono::high_resolution_clock::now();
+	struct QueuedBlock
+	{
+		size_t size;
+		uint8_t* buffer;
+		MemoryAddress baseAddress;
+	};
+	std::vector<std::thread> workerThreads;
+	std::stack<QueuedBlock> blocksToProcess;
+	std::atomic<bool> iterationComplete(false);
+	std::atomic<size_t> completedBlocks = 0;
+	std::mutex blockLock;
+
 	// this is just used for console output,
 	// makes debugging easier
-	size_t blocknum = 1;
 	std::string blocksMessage = "";
-	std::cout << "Scanning... Block ";
+	std::cout << concurentThreadsSupported << " Threads Scanning - Block ";
 
-	// scan each memory block in chunks of chunkSize
-	auto chunkSize = target->getChunkSize();
-	uint8_t* buffer = new uint8_t[chunkSize];
-	for (auto block = blocks.cbegin(); block != blocks.cend(); block++, blocknum++)
+	auto updateConsole = [&]() -> void
 	{
-		// update console
+		for (size_t i = 0; i < blocksMessage.length(); i++)
+			std::cout << '\b';
+		std::stringstream msg;
+		msg << completedBlocks << " of " << blocks.size();
+		blocksMessage = msg.str();
+		std::cout << blocksMessage;
+	};
+
+	// define our iteration function
+	auto threadedIterate = [&]() -> void
+	{
+		bool empty = false;
+		while (!iterationComplete || !empty)
 		{
-			for (size_t i = 0; i < blocksMessage.length(); i++)
-				std::cout << '\b';
-			std::stringstream msg;
-			msg << blocknum << " of " << blocks.size();
-			blocksMessage = msg.str();
-			std::cout << blocksMessage;
+			// let's get a block to process
+			blockLock.lock();
+
+			empty = blocksToProcess.empty();
+			if (empty)
+			{
+				blockLock.unlock();
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				continue;
+			}
+
+			auto block = blocksToProcess.top();
+			blocksToProcess.pop();
+
+			blockLock.unlock();
+
+			// now lets process it
+			callback(block.baseAddress, block.buffer, block.size);
+			delete[] block.buffer;
+			block.buffer = nullptr;
+
+			// mark it as complete TODO try not to aqcuire lock for this
+			completedBlocks++;
+		}
+	};
+
+	// fire up the threads
+	for (size_t i = 0; i < concurentThreadsSupported; i++)
+		workerThreads.push_back(std::thread(threadedIterate));
+
+
+	// start giving the threads stuff to do
+	for (auto block = blocks.cbegin(); block != blocks.cend(); block++)
+	{
+		// queue up this block for scanning
+		auto buffer = new uint8_t[block->allocationSize];
+		while (!buffer)
+		{
+			// we're probably hogging  too much memory, give threads some time to spin
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			buffer = new uint8_t[block->allocationSize];
 		}
 
-		// scan block
-		auto endAddress = block->allocationEnd;
-		auto currentChunkAddress = block->allocationBase;
-		auto currentChunkSize = std::min(chunkSize, block->allocationSize);
+		QueuedBlock qb;
+		qb.buffer = buffer;
+		qb.size = block->allocationSize;
+		qb.baseAddress = block->allocationBase;
 
-		while (true)
+		if (!target->readArray<uint8_t>(qb.baseAddress, qb.size, qb.buffer))
 		{
-			if (!target->readArray<uint8_t>(currentChunkAddress, currentChunkSize, buffer))
-				break;
-
-			callback(currentChunkAddress, buffer, chunkSize);
-
-			currentChunkAddress = (MemoryAddress)((size_t)currentChunkAddress + currentChunkSize);
-			if (currentChunkAddress >= endAddress)
-				break;
-			currentChunkSize = std::min(chunkSize, (size_t)endAddress - (size_t)currentChunkAddress);
+			// failures will typically happen when target isn't frozen, as it's
+			// memory allocations will change between the start and end of the scan
+			delete[] qb.buffer;
+			completedBlocks++;
+			continue;
 		}
+
+		blockLock.lock();
+		blocksToProcess.push(qb);
+		blockLock.unlock();
+
+		updateConsole();
 	}
 
-	std::cout << std::endl;
-	delete [] buffer;
+
+	iterationComplete = true;
+	blockLock.lock();
+	while (!blocksToProcess.empty())
+	{
+		blockLock.unlock();
+
+		updateConsole();
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		blockLock.lock();
+	}
+	blockLock.unlock();
+
+	for (auto thread = workerThreads.begin(); thread != workerThreads.end(); thread++)
+		thread->join();
+	workerThreads.clear();
+
+	updateConsole();
+	auto end = std::chrono::high_resolution_clock::now();
+	auto diff = end - start;
+	std::cout << " (Time " << std::chrono::duration<double, std::milli>(diff).count() << "ms)" << std::endl;
 }
 
 void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollection &needles, const CompareTypeFlags &compType)
@@ -143,9 +232,10 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 	auto blocks = this->getScannableBlocks(target);
 
 	// helper lambda that takes care of scanning each chunk
+	std::mutex mutex;
 	ScanResultMap results;
 	ScanResultAddressAllocator resLocAllocator;
-	auto scanChunk = [needles, compType, &resLocAllocator, &results]
+	auto scanChunk = [needles, compType, &mutex, &resLocAllocator, &results]
 					(const MemoryAddress &baseAddress, const uint8_t* chunk, const size_t &chunkSize)
 					-> void
 	{
@@ -167,6 +257,8 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 							resLocAllocator,
 							(MemoryAddress)((size_t)baseAddress + *loc)
 						);
+
+				mutex.lock();
 				auto found = results.find(resultLoc);
 				if (found == results.end())
 				{
@@ -176,6 +268,7 @@ void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollectio
 				}
 				else
 					found->second.push_back(*needle);
+				mutex.unlock();
 			}
 		}
 	};
@@ -246,8 +339,9 @@ void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
 	// first, we need to scan through every block and find any values which seem
 	// to be valid pointers within the target. We use a map to dedupe, since,
 	// even if a pointer appears multiple times, we only need to scan it once
+	std::mutex mutex;
 	PointerMap foundPointers;
-	auto findPointers = [this, upperBound, lowerBound, &target, &blocks, &foundPointers]
+	auto findPointers = [this, upperBound, lowerBound, &target, &blocks, &mutex, &foundPointers]
 						(const MemoryAddress &baseAddress, const uint8_t* chunk, const size_t &chunkSize)
 						-> void
 	{
@@ -267,7 +361,10 @@ void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
 				(
 					(size_t)startOffset + (size_t)baseAddress + i * desiredAlignment
 				);
+
+				mutex.lock();
 				foundPointers[check].push_back(location);
+				mutex.unlock();
 			}
 		}
 	};
