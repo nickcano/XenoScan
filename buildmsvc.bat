@@ -1,5 +1,5 @@
 @if not defined INCLUDE (
-	echo Must be run from a "Visual Studio Command Prompt"
+	echo Must be run from a "Developer Command Prompt for VS"
 ) else (
 
 if not exist "build" mkdir build

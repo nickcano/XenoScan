@@ -1,1 +1,0 @@
-buildmsvc.bat "Visual Studio 14 2015"

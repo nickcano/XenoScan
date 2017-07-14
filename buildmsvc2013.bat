@@ -1,1 +1,0 @@
-buildmsvc.bat "Visual Studio 12 2013"

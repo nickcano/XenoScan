@@ -17,15 +17,17 @@
 Additionally, this project contains some test code that ensures everything is working properly. A test is a combination of a `.cpp`, a `.h`, and a `.lua` file. For examples on how to use the scanner, you can check out the `.lua` test files.
 
 ## Compiling
-*XenoScan* uses *CMake*, and has been tested with Visual Studio 2010. In theory, you should be able to build the code with any modernish compiler, as long as you use CMake to generate the project files. Before you can compile, you will need to make sure you've checked out the submodules. Once that's done, you'll also have to build the *luajit* submodule so *XenoScan* can link against the libraries.
+*XenoScan* uses *CMake*, and has been tested with Visual Studio 2017. In theory, you should be able to build the code with any modernish compiler, as long as you use CMake to generate the project files. Before you can compile, you will need to make sure you've checked out the submodules. Once that's done, you'll also have to build the *luajit* submodule so *XenoScan* can link against the libraries.
 
-If you're using Visual Studio, this should be easy. Simply run `buildmsvc{VERSION}.bat` from a *Visual Studio Command Prompt*. As an example, to build a project for *Visual Studio 2010*, I might run
+If you're using Visual Studio, this should be easy. Simply run `buildmsvc2017.bat` from a *Developer Command Prompt for VS*. As an example, to build a project for *Visual Studio 2017*, I run
 
 ```
 cd C:\path\to\XenoScan
-buildmsvc2010.bat
+buildmsvc2017.bat
 ```
 Which would make a file named `XenoScan.sln` appear in my `build` directory (e.g. `C:\path\to\XenoScan\build`).
+
+The main development of XenoScan is done on this version of Visual Studio.
 
 If you're on another system or using another compiler or IDE, you'll have to [build *luajit* on your own](http://luajit.org/install.html) and run *CMake* manually.
 
