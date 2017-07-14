@@ -53,7 +53,6 @@ add_custom_target(
     XenoScanLuaCopyFiles ALL
 )
 foreach(LUA_FILE ${LUA_COPY_FILES})
-    get_filename_component(LUA_FILE_BASE ${LUA_FILE} PATH)
     add_custom_command(
         TARGET XenoScanLuaCopyFiles PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LUA_FILE} ${XenoScanLuaDir}
