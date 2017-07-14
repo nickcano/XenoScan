@@ -124,8 +124,11 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 
 	auto updateConsole = [&]() -> void
 	{
+		std::stringstream eraser;
 		for (size_t i = 0; i < blocksMessage.length(); i++)
-			std::cout << '\b';
+			eraser << '\b';
+		std::cout << eraser.str();
+
 		std::stringstream msg;
 		msg << completedBlocks << " of " << blocks.size();
 		blocksMessage = msg.str();
@@ -135,14 +138,12 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 	// define our iteration function
 	auto threadedIterate = [&]() -> void
 	{
-		bool empty = false;
-		while (!iterationComplete || !empty)
+		while (!iterationComplete)
 		{
 			// let's get a block to process
 			blockLock.lock();
 
-			empty = blocksToProcess.empty();
-			if (empty)
+			if (blocksToProcess.empty())
 			{
 				blockLock.unlock();
 				std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -164,8 +165,8 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 		}
 	};
 
-	// fire up the threads
-	for (size_t i = 0; i < concurentThreadsSupported; i++)
+	// fire up the threads; 1 fewer since we're still going too
+	for (size_t i = 0; i < concurentThreadsSupported - 1; i++)
 		workerThreads.push_back(std::thread(threadedIterate));
 
 
@@ -202,8 +203,6 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 		updateConsole();
 	}
 
-
-	iterationComplete = true;
 	blockLock.lock();
 	while (!blocksToProcess.empty())
 	{
@@ -215,6 +214,8 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 		blockLock.lock();
 	}
 	blockLock.unlock();
+
+	iterationComplete = true;
 
 	for (auto thread = workerThreads.begin(); thread != workerThreads.end(); thread++)
 		thread->join();
