@@ -186,6 +186,53 @@ const ScanVariant ScanVariant::FromStringTyped(const std::wstring& input, const 
 	return ret;
 }
 
+const ScanVariant ScanVariant::FromTargetMemory(const std::shared_ptr<class ScannerTarget> &target, const MemoryAddress& address, const ScanVariantType& type)
+{
+	ASSERT(target.get());
+	ASSERT(type >= SCAN_VARIANT_ALLTYPES_BEGIN && type <= SCAN_VARIANT_ALLTYPES_END);
+
+	// TODO: add structure support
+
+	auto traits = UnderlyingTypeTraits[type];
+	if (type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
+	{
+		std::string value;
+		if (!target->readString(address, value))
+			return ScanVariant::MakeNull();
+		return ScanVariant::FromString(value);
+	}
+	else if (type == ScanVariant::SCAN_VARIANT_WIDE_STRING)
+	{
+		// I don't think we'll ever need implement endianness flip for strings but,
+		// if we do, we'll need to update this and ScanVariantUnderlyingWideStringTypeTraits
+		// to support it
+		std::wstring value;
+		if (!target->readString(address, value))
+			return ScanVariant::MakeNull();
+		return ScanVariant::FromString(value);
+	}
+	else if (traits->isNumericType())
+	{
+		auto size = traits->getSize();
+		auto buffer = new uint8_t[size];
+		if (!target->readArray(address, size, buffer))
+		{
+			delete[] buffer;
+			return ScanVariant::MakeNull();
+		}
+		
+		ScanVariant v;
+		traits->copyFromBuffer(buffer, size, target->isLittleEndian(), &v.numericValue);
+		delete[] buffer;
+
+		v.type = type;
+		v.setSizeAndValue();
+		return v;
+	}
+
+	return ScanVariant::MakeNull();
+}
+
 
 const std::wstring ScanVariant::getTypeName() const
 {
@@ -337,6 +384,33 @@ const bool ScanVariant::getValue(std::vector<ScanVariant> &value) const
 	{
 		value = valueStruct;
 		return true;
+	}
+	return false;
+}
+
+const bool ScanVariant::writeToTarget(const std::shared_ptr<class ScannerTarget> &target, const MemoryAddress& address) const
+{
+	ASSERT(target.get());
+	ASSERT(type >= SCAN_VARIANT_ALLTYPES_BEGIN && type <= SCAN_VARIANT_ALLTYPES_END);
+
+	// TODO: add support for structures
+
+	auto traits = this->getTypeTraits();
+	if (type == ScanVariant::SCAN_VARIANT_ASCII_STRING)
+		return target->writeString(address, this->valueAsciiString);
+	else if (type == ScanVariant::SCAN_VARIANT_WIDE_STRING)
+		return target->writeString(address, this->valueWideString); // doubt it but if we ever endianness swap strings we'll need to fix this and FromTargetMemory
+	else if (traits->isNumericType())
+	{
+		auto size = traits->getSize();
+		auto buffer = new uint8_t[size];
+		traits->copyFromBuffer(&this->numericValue, size, target->isLittleEndian(), buffer);
+
+		auto ret = target->writeArray(address, size, buffer);
+
+		delete[] buffer;
+
+		return ret;
 	}
 	return false;
 }

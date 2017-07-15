@@ -75,6 +75,48 @@ function Process:findDataStructures(offset, count)
 	return getDataStructures(this.__nativeObject)
 end
 
+function Process:__validateMemoryValueForReadWrite(valueType)
+	local ALLOWED_VARIANT_TYPES =
+	{
+		[tostring(uint8)] =  uint8().__type,          [tostring(int8)] =  int8().__type,
+		[tostring(uint16)] = uint16().__type,         [tostring(int16)] = int16().__type,
+		[tostring(uint32)] = uint32().__type,         [tostring(int32)] = int32().__type,
+		[tostring(uint64)] = uint64().__type,         [tostring(int64)] = int64().__type,
+		[tostring(double)] = double().__type,         [tostring(float)] = float().__type,
+		[tostring(widestring)] = widestring().__type, [tostring(ascii)] = ascii().__type
+	}
+
+	if (type(valueType) == 'table') then
+		assert(valueType.__type, "Memory read or write must have strong type")
+		for _,v in pairs(ALLOWED_VARIANT_TYPES) do
+			if (v == valueType.__type) then
+				return valueType
+			end
+		end
+		error("Invalid type specified: " .. table.show(valueType, ""))
+	else
+		readType = ALLOWED_VARIANT_TYPES[tostring(valueType)] and valueType() or nil
+		assert(readType, "Invalid type specified: " .. tostring(valueType) .. " | " .. tostring(readType))
+		return readType
+	end
+end
+
+
+function Process:readMemory(address, valueType)
+	local this = type(self) == 'table' and self or Process.new(self)
+
+	local readValue = this:__validateMemoryValueForReadWrite(valueType)
+	return readMemory(this.__nativeObject, address, readValue.__type)
+end
+
+function Process:writeMemory(address, value)
+	local this = type(self) == 'table' and self or Process.new(self)
+
+	local writeValue = this:__validateMemoryValueForReadWrite(value)
+	assert(writeValue.__name, "No value specified for write: " .. table.show(writeValue, ""))
+	return writeMemory(this.__nativeObject, address, tostring(writeValue.__name), writeValue.__type)
+end
+
 TYPE_MODE_LOOSE = 1
 TYPE_MODE_TIGHT = 2
 TYPE_MODE_EXACT = 3

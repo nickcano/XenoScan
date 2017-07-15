@@ -34,22 +34,8 @@ public:
 	int attach();
 	int destroy();
 
-	int memoryReadUInt8();
-	int memoryReadInt8();
-
-	int memoryReadUInt16();
-	int memoryReadInt16();
-
-	int memoryReadUInt32();
-	int memoryReadInt32();
-
-	int memoryReadUInt64();
-	int memoryReadInt64();
-
-	int memoryReadFloat();
-	int memoryReadDouble();
-
-	int memoryReadString();
+	int readMemory();
+	int writeMemory();
 
 	int newScan();
 	int runScan();
@@ -82,22 +68,6 @@ private:
 
 	const ScanVariant getScanVariantFromLuaVariant(const LuaVariant &variant, const ScanVariant::ScanVariantType &type, bool allowBlank) const;
 	LuaVariant getLuaVariantFromScanVariant(const ScanVariant &variant) const;
-
-	template<typename T>
-	int internalMemoryRead()
-	{
-		auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER>();
-		auto scanner = this->getArgAsScannerObject(args);
-		if (!scanner.get()) return this->luaRet(false);
-		if (!scanner->target->isAttached()) return this->luaRet(false);
-
-		MemoryAddress address;
-		args[1].getAsPointer(address);
-
-		// scan
-		return this->luaRet(scanner->target->read<T>(address));
-	}
-
 };
 typedef std::shared_ptr<LuaEngine> LuaEngineShPtr;
 

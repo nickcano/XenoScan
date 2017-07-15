@@ -19,7 +19,6 @@ ScannerTargetWindows::ScannerTargetWindows() :
 	this->supportedBlueprints.insert(NativeClassInstanceBlueprint::Key);
 
 	this->pointerSize = sizeof(void*);
-	this->chunkSize = 0x800000;
 	this->littleEndian = true;
 
 	static_assert(sizeof(void*) <= sizeof(MemoryAddress), "MemoryAddress type is too small!");
@@ -105,6 +104,7 @@ bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformati
 		return false;
 	}
 
+	meminfo.isMirror = false;
 	meminfo.isCommitted = (memoryInfo.State == MEM_COMMIT);
 	meminfo.allocationBase = memoryInfo.BaseAddress;
 	meminfo.allocationSize = memoryInfo.RegionSize;

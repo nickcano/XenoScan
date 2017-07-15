@@ -4,18 +4,28 @@
 
 #include <algorithm>
 
+
+const MemoryMapEntry ScannerTargetDolphin::Mem1CachedMap = MemoryMapEntry(0x00000000, 0x80000000, 0x01800000);
+const MemoryMapEntry ScannerTargetDolphin::Mem1UncachedMap = ScannerTargetDolphin::Mem1CachedMap.mirror(0xC0000000);
+
+const std::vector<MemoryMapEntry> ScannerTargetDolphin::MemoryLayout
+{
+	ScannerTargetDolphin::Mem1CachedMap,
+	ScannerTargetDolphin::Mem1UncachedMap
+};
+
+
 ScannerTargetDolphin::ScannerTargetDolphin() :
 	sharedMemoryHandle(nullptr)
 {
 	this->supportedBlueprints.clear();
 
-	this->pointerSize = sizeof(uint16_t);
-	this->chunkSize = 0x800000;
+	this->pointerSize = sizeof(uint32_t);
 	this->littleEndian = false;
 
 	this->detach();
 
-	static_assert(sizeof(uint16_t) <= sizeof(MemoryAddress), "MemoryAddress type is too small!");
+	static_assert(sizeof(uint32_t) <= sizeof(MemoryAddress), "MemoryAddress type is too small!");
 	static_assert(sizeof(size_t) >= sizeof(MemoryAddress), "size_t is too small!");
 }
 
@@ -35,22 +45,27 @@ bool ScannerTargetDolphin::attach(const ProcessIdentifier &pid)
 	if (!this->sharedMemoryHandle)
 		return false;
 
-	// collect or views
-	// TODO: make resemble the real memory map
-	auto ramView = obtainView(this->sharedMemoryHandle, 0, 0x01800000);
-	if (!ramView)
-	{
-		this->detach();
-		return false;
-	}
-	this->views.push_back(MemoryView(0, 0x01800000, (uint8_t*)ramView));
-
-	// set our ranges
+	// prepare ranges to be set
 	this->highestAddress = 0;
-	this->lowestAddress = 0;
-	for (auto view = this->views.cbegin(); view != this->views.cend(); view++)
-		if (view->end > this->highestAddress)
-			this->highestAddress = view->end;
+	this->lowestAddress = (MemoryAddress)0xFFFFFFFF;
+
+	// attach to base memory
+	for (auto map = ScannerTargetDolphin::MemoryLayout.cbegin(); map != ScannerTargetDolphin::MemoryLayout.cend(); map++)
+	{
+		auto ramView = obtainView(this->sharedMemoryHandle, map->physicalBase, map->size);
+		if (!ramView)
+		{
+			this->detach();
+			return false;
+		}
+
+		this->views.push_back(MemoryView(*map, ramView));
+
+		if (map->logicalEnd > this->highestAddress)
+			this->highestAddress = map->logicalEnd;
+		if (map->logicalBase < this->lowestAddress)
+			this->lowestAddress = map->logicalBase;
+	}
 
 	// we good!
 	return true;
@@ -70,7 +85,7 @@ bool ScannerTargetDolphin::queryMemory(const MemoryAddress &adr, MemoryInformati
 	// first, let's see if this is within a known view
 	for (auto view = this->views.cbegin(); view != this->views.cend(); view++)
 	{
-		if (adr >= view->start && adr < view->end)
+		if (view->containsAddress(adr))
 		{
 			retView = view;
 			break;
@@ -83,7 +98,7 @@ bool ScannerTargetDolphin::queryMemory(const MemoryAddress &adr, MemoryInformati
 	{
 		for (auto view = this->views.cbegin(); view != this->views.cend(); view++)
 		{
-			if (adr < view->start)
+			if (adr < view->details.logicalBase)
 			{
 				retView = view;
 				break;
@@ -95,9 +110,10 @@ bool ScannerTargetDolphin::queryMemory(const MemoryAddress &adr, MemoryInformati
 	if (retView != this->views.cend())
 	{
 		meminfo.isCommitted = true;
-		meminfo.allocationBase = retView->start;
-		meminfo.allocationSize = retView->size;
-		meminfo.allocationEnd = retView->end;
+		meminfo.isMirror = retView->details.isMirror;
+		meminfo.allocationBase = retView->details.logicalBase;
+		meminfo.allocationSize = retView->details.size;
+		meminfo.allocationEnd = retView->details.logicalEnd;
 
 		meminfo.isExecutable = false;
 		meminfo.isWriteable = true;
@@ -105,6 +121,8 @@ bool ScannerTargetDolphin::queryMemory(const MemoryAddress &adr, MemoryInformati
 		nextAdr = meminfo.allocationEnd;
 		return true;
 	}
+
+	nextAdr = this->highestAddress;
 	return false;
 }
 
@@ -121,21 +139,36 @@ bool ScannerTargetDolphin::rawRead(const MemoryAddress &adr, const size_t object
 
 	for (auto view = this->views.cbegin(); view != this->views.cend(); view++)
 	{
-		if (adr >= view->start && adr < view->end)
+		size_t memorySize;
+		auto memory = view->getPointerToMemory(adr, memorySize);
+		if (memory)
 		{
-			size_t offset = ((size_t)adr - (size_t)view->start);
-			size_t size = std::min(offset + objectSize, view->size) - offset;
-			memcpy(result, &view->buffer[offset], size);
+			memorySize = std::min(objectSize, memorySize);
+			if (!memorySize) // shouldn't happen but check to be safe
+				continue;
+			memcpy(result, memory, memorySize);
 			return true;
 		}
 	}
-
 	return false;
 }
 
 bool ScannerTargetDolphin::rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const
 {
 	ASSERT(this->isAttached());
+	for (auto view = this->views.cbegin(); view != this->views.cend(); view++)
+	{
+		size_t memorySize;
+		auto memory = view->getPointerToMemory(adr, memorySize);
+		if (memory)
+		{
+			memorySize = std::min(objectSize, memorySize);
+			if (!memorySize) // shouldn't happen but check to be safe
+				continue;
+			memcpy(memory, data, memorySize);
+			return true;
+		}
+	}
 	return false;
 }
 

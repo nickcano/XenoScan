@@ -88,66 +88,28 @@ int LuaEngine::destroy()
 	return this->luaRet(false);
 }
 
-LUAENGINE_EXPORT_FUNCTION(memoryReadUInt8, "memoryReadUInt8");
-int LuaEngine::memoryReadUInt8()
+LUAENGINE_EXPORT_FUNCTION(readMemory, "readMemory");
+int LuaEngine::readMemory()
 {
-	return this->internalMemoryRead<uint8_t>();
+	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER, LUA_VARIANT_INT>();
+	auto scanner = this->getArgAsScannerObject(args);
+	if (!scanner.get()) return this->luaRet();
+	if (!scanner->target->isAttached()) return this->luaRet();
 
-}
-LUAENGINE_EXPORT_FUNCTION(memoryReadInt8, "memoryReadInt8");
-int LuaEngine::memoryReadInt8()
-{
-	return this->internalMemoryRead<int8_t>();
-}
+	MemoryAddress address;
+	args[1].getAsPointer(address);
 
-LUAENGINE_EXPORT_FUNCTION(memoryReadUInt16, "memoryReadUInt16");
-int LuaEngine::memoryReadUInt16()
-{
-	return this->internalMemoryRead<uint16_t>();
-}
-LUAENGINE_EXPORT_FUNCTION(memoryReadInt16, "memoryReadInt16");
-int LuaEngine::memoryReadInt16()
-{
-	return this->internalMemoryRead<int16_t>();
+	ScanVariant::ScanVariantType memberType;
+	args[2].getAsInt(memberType);
+
+	auto result = ScanVariant::FromTargetMemory(scanner->target, address, memberType);
+	return this->luaRet(this->getLuaVariantFromScanVariant(result));
 }
 
-LUAENGINE_EXPORT_FUNCTION(memoryReadUInt32, "memoryReadUInt32");
-int LuaEngine::memoryReadUInt32()
+LUAENGINE_EXPORT_FUNCTION(writeMemory, "writeMemory");
+int LuaEngine::writeMemory()
 {
-	return this->internalMemoryRead<uint32_t>();
-}
-LUAENGINE_EXPORT_FUNCTION(memoryReadInt32, "memoryReadInt32");
-int LuaEngine::memoryReadInt32()
-{
-	return this->internalMemoryRead<int32_t>();
-}
-
-LUAENGINE_EXPORT_FUNCTION(memoryReadUInt64, "memoryReadUInt64");
-int LuaEngine::memoryReadUInt64()
-{
-	return this->internalMemoryRead<uint64_t>();
-}
-LUAENGINE_EXPORT_FUNCTION(memoryReadInt64, "memoryReadInt64");
-int LuaEngine::memoryReadInt64()
-{
-	return this->internalMemoryRead<int64_t>();
-}
-
-LUAENGINE_EXPORT_FUNCTION(memoryReadFloat, "memoryReadFloat");
-int LuaEngine::memoryReadFloat()
-{
-	return this->internalMemoryRead<float>();
-}
-LUAENGINE_EXPORT_FUNCTION(memoryReadDouble, "memoryReadDouble");
-int LuaEngine::memoryReadDouble()
-{
-	return this->internalMemoryRead<float>();
-}
-
-LUAENGINE_EXPORT_FUNCTION(memoryReadString, "memoryReadString");
-int LuaEngine::memoryReadString()
-{
-	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER>();
+	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER, LUA_VARIANT_STRING, LUA_VARIANT_INT>();
 	auto scanner = this->getArgAsScannerObject(args);
 	if (!scanner.get()) return this->luaRet(false);
 	if (!scanner->target->isAttached()) return this->luaRet(false);
@@ -155,18 +117,16 @@ int LuaEngine::memoryReadString()
 	MemoryAddress address;
 	args[1].getAsPointer(address);
 
-	// scan
-	// TODO: this sucks. fix.
-	std::string ret = "";
-	int8_t chr = 0x00;
-	while ((chr = scanner->target->read<int8_t>(address)) != 0x00)
-	{
-		address = (MemoryAddress)&(((int8_t*)address)[1]);
-		ret += chr;
-	}
+	ScanVariant::ScanVariantType memberType;
+	args[3].getAsInt(memberType);
 
-	return this->luaRet(ret);
+	auto writeVariant = this->getScanVariantFromLuaVariant(args[2], memberType, false);
+	if (writeVariant.isNull())
+		return this->luaRet(false);
+
+	return this->luaRet(writeVariant.writeToTarget(scanner->target, address));
 }
+
 
 LUAENGINE_EXPORT_FUNCTION(newScan, "newScan");
 int LuaEngine::newScan()

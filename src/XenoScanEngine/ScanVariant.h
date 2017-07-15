@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
 
 #include "Assert.h"
 #include "ScanVariantTypeTraits.h"
@@ -65,6 +66,8 @@ public:
 
 	static const ScanVariant FromStringTyped(const std::string& input,  const ScanVariantType& type);
 	static const ScanVariant FromStringTyped(const std::wstring& input, const ScanVariantType& type);
+
+	static const ScanVariant FromTargetMemory(const std::shared_ptr<class ScannerTarget> &target, const MemoryAddress& address, const ScanVariantType& type);
 
 
 #define SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(TYPENAME, TYPE, VALUENAME, TYPEIDENTIFIER) \
@@ -149,6 +152,8 @@ public:
 	const bool getValue(double &value) const;
 	const bool getValue(float &value) const;
 	const bool getValue(std::vector<ScanVariant> &value) const;
+
+	const bool writeToTarget(const std::shared_ptr<class ScannerTarget> &target, const MemoryAddress& address) const;
 
 	/*
 		This is safe IF and ONLY IF the caller takes some precautions:

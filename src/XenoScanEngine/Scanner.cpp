@@ -74,7 +74,7 @@ MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr
 	{
 		MemoryInformation meminfo;
 		if (target->queryMemory(nextAddress, meminfo, nextAddress))
-			if (meminfo.isCommitted)
+			if (meminfo.isCommitted && !meminfo.isMirror)
 				blocks.push_back(meminfo);
 	}
 

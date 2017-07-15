@@ -23,7 +23,7 @@ public:
 
 protected:
 	bool littleEndian;
-	size_t pointerSize, chunkSize;
+	size_t pointerSize;
 	MemoryAddress lowestAddress, highestAddress;
 	std::set<std::string> supportedBlueprints;
 

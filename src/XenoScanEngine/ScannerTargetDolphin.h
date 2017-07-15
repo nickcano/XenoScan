@@ -29,16 +29,33 @@ protected:
 private:
 	void* sharedMemoryHandle;
 
+	static const MemoryMapEntry Mem1CachedMap;
+	static const MemoryMapEntry Mem1UncachedMap;
+	static const std::vector<MemoryMapEntry> MemoryLayout;
+
 	struct MemoryView
 	{
-		MemoryView(MemoryAddress start, size_t size, uint8_t* buffer)
-			: start(start), size(size), buffer(buffer)
-		{
-			end = (MemoryAddress)((size_t)start + size);
-		}
-		size_t size;
-		MemoryAddress start, end;
 		uint8_t* buffer;
+		MemoryMapEntry details;
+
+		MemoryView(const MemoryMapEntry details, uint8_t* buffer)
+			: details(details), buffer(buffer)
+		{}
+
+		bool containsAddress(const MemoryAddress &logicalAddress) const
+		{
+			return (logicalAddress >= details.logicalBase && logicalAddress < details.logicalEnd);
+		}
+
+		void* getPointerToMemory(const MemoryAddress &logicalAddress, size_t &trailingSize) const
+		{
+			if (!this->containsAddress(logicalAddress))
+				return nullptr;
+
+			size_t offset = ((size_t)logicalAddress - (size_t)details.logicalBase);
+			trailingSize = details.size - offset;
+			return &this->buffer[offset];
+		}
 	};
 
 	std::vector<MemoryView> views;
