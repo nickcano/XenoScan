@@ -8,6 +8,25 @@ LuaEngine::LuaEngine(void)
 
 LuaEngine::~LuaEngine(void) {}
 
+void LuaEngine::doThink()
+{
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	std::vector<LuaVariant> args;
+	for (auto evt = this->timedEvents.begin(); evt != this->timedEvents.end(); )
+	{
+		if (evt->executeTime < currentTime)
+		{
+			if (!this->executeFunction(evt->function, args, 0, evt->function))
+			{
+				// TODO maybe report the error ?
+			}
+			evt = this->timedEvents.erase(evt);
+		}
+		else
+			evt++;
+	}
+}
+
 LuaVariant LuaEngine::createLuaObject(const std::string& typeName, const void* pointer) const
 {
 	LuaVariant::LuaVariantKTable target;

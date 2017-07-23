@@ -2,6 +2,8 @@
 #include <vector>
 #include <list>
 #include <iostream>
+#include <chrono>
+#include <list>
 
 #include "XenoLua/LuaPrimitive.h"
 
@@ -30,7 +32,11 @@ public:
 	LuaEngine();
 	~LuaEngine();
 
+	void doThink();
+
 	/* EXPORTED FUNCTIONS */
+	int settimeout();
+
 	int attach();
 	int destroy();
 
@@ -59,6 +65,13 @@ private:
 	typedef std::shared_ptr<ScannerPair> ScannerPairShPtr;
 	typedef std::list<ScannerPairShPtr> ScannerPairList;
 	ScannerPairList scanners;
+
+	struct TimedEvent
+	{
+		LuaVariant function;
+		std::chrono::time_point<std::chrono::steady_clock> executeTime;
+	};
+	std::list<TimedEvent> timedEvents;
 
 	LuaVariant createLuaObject(const std::string& typeName, const void* pointer) const;
 	bool getLuaObject(const LuaVariant& object, const std::string& typeName, void* &pointer) const;

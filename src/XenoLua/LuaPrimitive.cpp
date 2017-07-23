@@ -85,12 +85,36 @@ void LuaPrimitive::pushLocal(const LuaVariant &var)
 		var.push(this->L);
 }
 
-bool LuaPrimitive::executeFunction(std::string name, std::vector<LuaVariant> arguments, int32_t returns)
+bool LuaPrimitive::executeFunction(const std::string& name, const std::vector<LuaVariant>& arguments, const int32_t returns)
 {
 	lua_getglobal(this->L, name.c_str());
 	for (auto iarg = arguments.begin(); iarg != arguments.end(); iarg++)
 		iarg->push(this->L);
 
+	if (lua_pcall(this->L, arguments.size(), returns, 0))
+	{
+		this->collectErrors(false);
+		return false;
+	}
+	return true;
+}
+
+bool LuaPrimitive::executeFunction(const LuaVariant& function, const std::vector<LuaVariant>& arguments, const int32_t returns, LuaVariant& newFunction)
+{
+	if (function.getType() != LUA_VARIANT_FUNCTION_REF)
+		return false;
+
+	// push it
+	function.push(this->L);
+
+	// make a copy since our ref will be invalidated
+	newFunction = LuaVariant::parse(this->L, 1);
+
+	// push args
+	for (auto iarg = arguments.begin(); iarg != arguments.end(); iarg++)
+		iarg->push(this->L);
+
+	// call it
 	if (lua_pcall(this->L, arguments.size(), returns, 0))
 	{
 		this->collectErrors(false);

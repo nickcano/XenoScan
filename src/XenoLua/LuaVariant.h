@@ -18,6 +18,7 @@ enum LUA_VARIANT_TYPE : uint32_t
 	LUA_VARIANT_STRING,
 	LUA_VARIANT_BOOL,
 	LUA_VARIANT_FUNCTION,
+	LUA_VARIANT_FUNCTION_REF,
 	LUA_VARIANT_ITABLE,
 	LUA_VARIANT_KTABLE,
 	LUA_VARIANT_NIL
@@ -47,6 +48,7 @@ public:
 			CONST_TO_STRING_SWITCH(LUA_VARIANT_STRING);
 			CONST_TO_STRING_SWITCH(LUA_VARIANT_BOOL);
 			CONST_TO_STRING_SWITCH(LUA_VARIANT_FUNCTION);
+			CONST_TO_STRING_SWITCH(LUA_VARIANT_FUNCTION_REF);
 			CONST_TO_STRING_SWITCH(LUA_VARIANT_ITABLE);
 			CONST_TO_STRING_SWITCH(LUA_VARIANT_KTABLE);
 			CONST_TO_STRING_SWITCH(LUA_VARIANT_NIL);
@@ -86,6 +88,13 @@ public:
 		{
 			LuaVariantBool value = (lua_toboolean(L, index) == 1);
 			v = LuaVariant(value);
+		}
+		else if(type == LUA_TFUNCTION)
+		{
+			// copy the function since we're about to pop it off
+			lua_pushvalue(L, index);
+			LuaVariantInt index = luaL_ref(L, LUA_REGISTRYINDEX);
+			v = LuaVariant::FromFunctionRef(index);
 		}
 		else if (type == LUA_TTABLE)
 		{
@@ -162,8 +171,8 @@ public:
 			}
 		}
 
-		if (pop) // TODO: verify this works as expected .. don't think so
-			lua_pop(L, index);
+		//if (pop) // TODO: verify this works as expected .. don't think so
+			//lua_pop(L, index);
 		return v;
 	}
 
@@ -230,6 +239,11 @@ public:
 			case LUA_VARIANT_FUNCTION:
 			{
 				lua_pushcfunction(L, this->valueFunction);
+				break;
+			}
+			case LUA_VARIANT_FUNCTION_REF:
+			{
+				lua_rawgeti(L, LUA_REGISTRYINDEX, this->valueInt);
 				break;
 			}
 			case LUA_VARIANT_ITABLE:
@@ -343,6 +357,12 @@ public:
 		value = this->valueFunction;
 		return true;
 	}
+	bool getAsFunctionRef(LuaVariantInt &value) const
+	{
+		if (this->type != LUA_VARIANT_FUNCTION_REF) return false;
+		value = this->valueInt;
+		return true;
+	}
 	bool getAsITable(LuaVariantITable &value) const
 	{
 		if (this->type != LUA_VARIANT_ITABLE) return false;
@@ -374,6 +394,7 @@ public:
 				COMPARISON_SWITCH(LUA_VARIANT_STRING, valueString);
 				COMPARISON_SWITCH(LUA_VARIANT_BOOL, valueBool);
 				COMPARISON_SWITCH(LUA_VARIANT_FUNCTION, valueFunction);
+				COMPARISON_SWITCH(LUA_VARIANT_FUNCTION_REF, valueInt);
 				COMPARISON_SWITCH(LUA_VARIANT_ITABLE, valueITable);
 				COMPARISON_SWITCH(LUA_VARIANT_KTABLE, valueKTable);
 			}
@@ -384,14 +405,28 @@ public:
 	}
 private:
 	uint32_t type;
-	LuaVariantDouble valueDouble;
-	LuaVariantInt valueInt;
-	LuaVariantPointer valuePointer;
+
+	union
+	{
+		LuaVariantDouble valueDouble;
+		LuaVariantInt valueInt;
+		LuaVariantPointer valuePointer;
+		LuaVariantBool valueBool;
+		LuaVariantFunction valueFunction;
+	};
+
 	LuaVariantString valueString;
-	LuaVariantBool valueBool;
-	LuaVariantFunction valueFunction;
 	LuaVariantITable valueITable;
 	LuaVariantKTable valueKTable;
+
+
+	static LuaVariant FromFunctionRef(LuaVariantInt ref)
+	{
+		LuaVariant v;
+		v.type = LUA_VARIANT_FUNCTION_REF;
+		v.valueInt = ref;
+		return v;
+	}
 
 };
 

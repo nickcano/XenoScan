@@ -44,7 +44,8 @@ protected:
 	lua_State *L;
 
 	void pushLocal(const LuaVariant &var);
-	bool executeFunction(std::string name, std::vector<LuaVariant> arguments, int32_t returns);
+	bool executeFunction(const std::string& name, const std::vector<LuaVariant>& arguments, const int32_t returns);
+	bool executeFunction(const LuaVariant& function, const std::vector<LuaVariant>& arguments, const int32_t returns, LuaVariant& newFunction);
 
 	int luaRet();
 	int luaRet(const LuaVariant &value);

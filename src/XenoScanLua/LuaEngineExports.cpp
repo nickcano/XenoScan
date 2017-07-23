@@ -40,6 +40,25 @@ LUAENGINE_EXPORT_VALUE(int32_t, SCAN_VARIANT_STRUCTURE,                  ScanVar
 LUAENGINE_EXPORT_FACTORY_KEYS(ScannerTarget::FACTORY_TYPE, ScannerTarget::Factory, ATTACH_TARGET_NAMES);
 
 
+LUAENGINE_EXPORT_FUNCTION(settimeout, "settimeout"); // settimeout(func, timeout)
+int LuaEngine::settimeout()
+{
+	auto args = this->getArguments<LUA_VARIANT_FUNCTION_REF, LUA_VARIANT_INT>();
+
+	LuaVariant::LuaVariantInt delay;
+	args[1].getAsInt(delay);
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	TimedEvent t;
+	t.function = args[0];
+	t.executeTime = currentTime + std::chrono::milliseconds(delay);
+
+	this->timedEvents.push_back(t);
+	
+	return this->luaRet(true);
+}
+
+
 LUAENGINE_EXPORT_FUNCTION(attach, "attach"); // attach(type, pid)
 int LuaEngine::attach()
 {
