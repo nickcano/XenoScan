@@ -24,14 +24,13 @@ CREATE_PRODUCER(DataStructureBlueprint, StdMapBlueprint,               "std::map
 CREATE_PRODUCER(DataStructureBlueprint, NativeClassInstanceBlueprint,  "Native Class Instance");
 
 
-void DataStructureBlueprint::findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, DataStructureResultMap& results)
+void DataStructureBlueprint::findDataStructures(const ScannerTargetShPtr &target, const DataStructureBlueprint::FACTORY_TYPE::KEY_TYPE &key, const PointerMap &pointerMap, DataStructureResultMap& results)
 {
-	auto& bps = target->getSupportedBlueprints();
+	auto supported = target->getSupportedBlueprints();
+	if (supported.find(key) == supported.cend())
+		return;
 
-	for (auto bp = bps.begin(); bp != bps.end(); bp++)
-	{
-		auto print = DataStructureBlueprint::Factory.createInstance(*bp);
-		ASSERT(print != nullptr);
-		print->findMatches(target, pointerMap, results);
-	}
+	auto print = DataStructureBlueprint::Factory.createInstance(key);
+	ASSERT(print != nullptr);
+	print->findMatches(target, pointerMap, results);
 }

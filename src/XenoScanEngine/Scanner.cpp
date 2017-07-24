@@ -56,10 +56,10 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 		this->doReScan(target, needles, comp);
 }
 
-void Scanner::runDataStructureScan(const ScannerTargetShPtr &target)
+void Scanner::runDataStructureScan(const ScannerTargetShPtr &target, const std::string &type)
 {
 	ASSERT(target.get() != nullptr);
-	this->doDataStructureScan(target);
+	this->doDataStructureScan(target, type);
 }
 
 MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr &target) const
@@ -330,8 +330,16 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 	this->scanState->updateState(newResults);
 }
 
-void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
+void Scanner::doDataStructureScan(const ScannerTargetShPtr &target, const std::string &type)
 {
+	auto supported = target->getSupportedBlueprints();
+	if (supported.find(type) == supported.cend())
+	{
+		std::cout << "Data Structure Blueprint type not supported: '" << type << "'!" << std::endl;
+		return;
+	}
+
+
 	// determine which blocks of memory can be scanned
 	auto blocks = this->getScannableBlocks(target);
 
@@ -375,6 +383,6 @@ void Scanner::doDataStructureScan(const ScannerTargetShPtr &target)
 
 	// with the list of pointers, scan for valid structures
 	DataStructureResultMap results;
-	DataStructureBlueprint::findDataStructures(target, foundPointers, results);
+	DataStructureBlueprint::findDataStructures(target, type, foundPointers, results);
 	this->scanState->updateState(results);
 }

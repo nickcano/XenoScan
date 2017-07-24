@@ -56,5 +56,5 @@ public:
 		}
 	}
 
-	static void findDataStructures(const ScannerTargetShPtr &target, const PointerMap &pointerMap, DataStructureResultMap& results);
+	static void findDataStructures(const ScannerTargetShPtr &target, const DataStructureBlueprint::FACTORY_TYPE::KEY_TYPE &key, const PointerMap &pointerMap, DataStructureResultMap& results);
 };

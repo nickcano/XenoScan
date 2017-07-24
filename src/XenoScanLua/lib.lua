@@ -70,9 +70,9 @@ function Process:getResults(offset, count)
 	return result
 end
 
-function Process:findDataStructures(offset, count)
+function Process:findDataStructures(typename)
 	local this = type(self) == 'table' and self or Process.new(self)
-	return getDataStructures(this.__nativeObject)
+	return getDataStructures(this.__nativeObject, typename)[typename]
 end
 
 function Process:__validateMemoryValueForReadWrite(valueType)

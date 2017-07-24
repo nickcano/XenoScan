@@ -52,7 +52,7 @@ public:
 
 	void startNewScan();
 	void runScan(const ScannerTargetShPtr &target, const ScanVariant &needle, const CompareTypeFlags &comp, const ScanInferType &type);
-	void runDataStructureScan(const ScannerTargetShPtr &target);
+	void runDataStructureScan(const ScannerTargetShPtr &target, const std::string &type);
 	
 private:
 	struct typeRange
@@ -76,6 +76,6 @@ private:
 	void doScan(const ScannerTargetShPtr &target, const ScanResultCollection &needles, const CompareTypeFlags &compType);
 	void doReScan(const ScannerTargetShPtr &target, const ScanResultCollection &needles, const CompareTypeFlags &compType);
 
-	void doDataStructureScan(const ScannerTargetShPtr &target);
+	void doDataStructureScan(const ScannerTargetShPtr &target, const std::string &type);
 };
 typedef std::shared_ptr<Scanner> ScannerShPtr;

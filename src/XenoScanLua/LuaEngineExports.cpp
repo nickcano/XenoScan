@@ -348,11 +348,14 @@ int LuaEngine::getScanResults()
 LUAENGINE_EXPORT_FUNCTION(getDataStructures, "getDataStructures");
 int LuaEngine::getDataStructures()
 {
-	auto args = this->getArguments<LUA_VARIANT_KTABLE>();
+	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_STRING>();
 	auto scanner = this->getArgAsScannerObject(args);
 	if (!scanner.get()) return this->luaRet(false);
 
-	scanner->scanner->runDataStructureScan(scanner->target);
+	std::string type;
+	args[1].getAsString(type);
+
+	scanner->scanner->runDataStructureScan(scanner->target, type);
 
 	auto results = scanner->scanner->scanState->foundDataStructures();
 
