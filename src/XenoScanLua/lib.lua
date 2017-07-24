@@ -102,19 +102,41 @@ function Process:__validateMemoryValueForReadWrite(valueType)
 end
 
 
-function Process:readMemory(address, valueType)
+function Process:readMemory(address, offset, valueType)
 	local this = type(self) == 'table' and self or Process.new(self)
+	if valueType == nil then
+		valueType = offset
+		offset = 0
+	end
 
 	local readValue = this:__validateMemoryValueForReadWrite(valueType)
-	return readMemory(this.__nativeObject, address, readValue.__type)
+	return readMemory(this.__nativeObject, address, offset, readValue.__type)
 end
 
-function Process:writeMemory(address, value)
+function Process:writeMemory(address, offset, value)
 	local this = type(self) == 'table' and self or Process.new(self)
+	if value == nil then
+		value = offset
+		offset = 0
+	end
 
+	-- write an entire structure
+	if (type(value) == "table" and value.__schema) then
+		local offset = 0
+		for _, v in ipairs(value.__schema) do
+			local val = value[v.__name]
+			if (val and type(val) ~= 'table') then
+				this:writeMemory(address, offset, {__name = val, __type = v.__type})
+			end
+			offset = offset + sizeof(v)
+		end
+		return true
+	end
+
+	-- write a single value
 	local writeValue = this:__validateMemoryValueForReadWrite(value)
 	assert(writeValue.__name, "No value specified for write: " .. table.show(writeValue, ""))
-	return writeMemory(this.__nativeObject, address, tostring(writeValue.__name), writeValue.__type)
+	return writeMemory(this.__nativeObject, address, offset, tostring(writeValue.__name), writeValue.__type)
 end
 
 TYPE_MODE_LOOSE = 1
@@ -269,6 +291,49 @@ function struct(...)
 	end
 
 	return structure
+end
+
+function sizeof(t)
+	local ALLOWED_VARIANT_TYPES =
+	{
+		[tostring(uint8)] = true, [tostring(int8)] = true,
+		[tostring(uint16)] = true, [tostring(int16)] = true,
+		[tostring(uint32)] = true, [tostring(int32)] = true,
+		[tostring(uint64)] = true, [tostring(int64)] = true,
+		[tostring(double)] = true, [tostring(float)] = true
+	}
+
+	if (type(t) == 'table' and t.__type) then return sizeof(t.__type)
+	elseif (ALLOWED_VARIANT_TYPES[tostring(t)]) then return sizeof(t())
+	elseif (t == SCAN_VARIANT_UINT8) then return  1
+	elseif (t == SCAN_VARIANT_INT8) then return   1
+	elseif (t == SCAN_VARIANT_UINT16) then return 2
+	elseif (t == SCAN_VARIANT_INT16) then return  2
+	elseif (t == SCAN_VARIANT_UINT32) then return 4
+	elseif (t == SCAN_VARIANT_INT32) then return  4
+	elseif (t == SCAN_VARIANT_UINT64) then return 8
+	elseif (t == SCAN_VARIANT_INT64) then return  8
+	elseif (t == SCAN_VARIANT_DOUBLE) then return 8
+	elseif (t == SCAN_VARIANT_FLOAT) then return  8
+	end
+
+	error("Unsizable type :" .. tostring(t))
+end
+
+function offsetof(struct, val)
+	assert(type(struct) == "table", "Expected a table, got " .. type(struct))
+	assert(struct.__schema, "No schema found for structure")
+	assert(type(val) == "string", "Expected a string, got " .. type(val))
+	assert(struct[val], "Named value doesnt exist in structure: " .. val)
+	
+	local offset = 0
+	for _, v in ipairs(struct.__schema) do
+		if (v.__name == val) then
+			return offset
+		end
+		offset = offset + sizeof(v)
+	end
+	return nil
 end
 
 function table.show(t, name, indent)

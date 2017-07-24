@@ -110,7 +110,7 @@ int LuaEngine::destroy()
 LUAENGINE_EXPORT_FUNCTION(readMemory, "readMemory");
 int LuaEngine::readMemory()
 {
-	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER, LUA_VARIANT_INT>();
+	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER, LUA_VARIANT_INT, LUA_VARIANT_INT>();
 	auto scanner = this->getArgAsScannerObject(args);
 	if (!scanner.get()) return this->luaRet();
 	if (!scanner->target->isAttached()) return this->luaRet();
@@ -118,9 +118,13 @@ int LuaEngine::readMemory()
 	MemoryAddress address;
 	args[1].getAsPointer(address);
 
-	ScanVariant::ScanVariantType memberType;
-	args[2].getAsInt(memberType);
+	LuaVariant::LuaVariantInt offset;
+	args[2].getAsInt(offset);
 
+	ScanVariant::ScanVariantType memberType;
+	args[3].getAsInt(memberType);
+
+	address = (MemoryAddress)((size_t)address + offset); // TODO need to clean this up when MemoryAddress operators are added
 	auto result = ScanVariant::FromTargetMemory(scanner->target, address, memberType);
 	return this->luaRet(this->getLuaVariantFromScanVariant(result));
 }
@@ -128,7 +132,7 @@ int LuaEngine::readMemory()
 LUAENGINE_EXPORT_FUNCTION(writeMemory, "writeMemory");
 int LuaEngine::writeMemory()
 {
-	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER, LUA_VARIANT_STRING, LUA_VARIANT_INT>();
+	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_POINTER, LUA_VARIANT_INT, LUA_VARIANT_STRING, LUA_VARIANT_INT>();
 	auto scanner = this->getArgAsScannerObject(args);
 	if (!scanner.get()) return this->luaRet(false);
 	if (!scanner->target->isAttached()) return this->luaRet(false);
@@ -136,13 +140,17 @@ int LuaEngine::writeMemory()
 	MemoryAddress address;
 	args[1].getAsPointer(address);
 
-	ScanVariant::ScanVariantType memberType;
-	args[3].getAsInt(memberType);
+	LuaVariant::LuaVariantInt offset;
+	args[2].getAsInt(offset);
 
-	auto writeVariant = this->getScanVariantFromLuaVariant(args[2], memberType, false);
+	ScanVariant::ScanVariantType memberType;
+	args[4].getAsInt(memberType);
+
+	auto writeVariant = this->getScanVariantFromLuaVariant(args[3], memberType, false);
 	if (writeVariant.isNull())
 		return this->luaRet(false);
 
+	address = (MemoryAddress)((size_t)address + offset); // TODO need to clean this up when MemoryAddress operators are added
 	return this->luaRet(writeVariant.writeToTarget(scanner->target, address));
 }
 
