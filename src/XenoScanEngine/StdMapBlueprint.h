@@ -19,7 +19,7 @@ public:
 		DataStructureDetails& details) const
 	{
 		if (this->findRootNode(target, startPointer, details))
-		{			
+		{
 			return this->countNodes(target, details);
 		}
 
@@ -182,6 +182,8 @@ private:
 			if (right != details.identifier) toSearch.push(right);
 		}
 
+		if (searched.size() <= 1) // we'll often find thousands of 1-sized maps, don't waste allocation time on them
+			return false;
 		details.members.insert(std::make_pair(ItemCountTag, ScanVariant::FromNumber(searched.size())));
 		return true;
 	}

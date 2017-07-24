@@ -2,14 +2,10 @@
 #include "ScannerTarget.h"
 #include "DataStructureBlueprint.h"
 #include "Assert.h"
+#include "StackJobPool.h"
 
-#include <algorithm>
-#include <sstream>
-#include <thread>
+
 #include <mutex>
-#include <atomic>
-#include <chrono>
-#include <stack>
 
 Scanner::Scanner() : scanState(nullptr)
 {
@@ -98,79 +94,23 @@ void Scanner::calculateBoundsOfBlocks(const ScannerTargetShPtr &target, const Me
 
 void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryInformationCollection &blocks, blockIterationCallback callback) const
 {
-	// find out how many threads we can run
-	auto concurentThreadsSupported = std::thread::hardware_concurrency();
-	if (concurentThreadsSupported <= 0)
-		concurentThreadsSupported = 2; // TODO: maybe fix
-
-	// define some common variables
-	auto start = std::chrono::high_resolution_clock::now();
 	struct QueuedBlock
 	{
 		size_t size;
 		uint8_t* buffer;
 		MemoryAddress baseAddress;
 	};
-	std::vector<std::thread> workerThreads;
-	std::stack<QueuedBlock> blocksToProcess;
-	std::atomic<bool> iterationComplete(false);
-	std::atomic<size_t> completedBlocks = 0;
-	std::mutex blockLock;
 
-	// this is just used for console output,
-	// makes debugging easier
-	std::string blocksMessage = "";
-	std::cout << concurentThreadsSupported << " Threads Scanning - Block ";
-
-	auto updateConsole = [&]() -> void
-	{
-		std::stringstream eraser;
-		for (size_t i = 0; i < blocksMessage.length(); i++)
-			eraser << '\b';
-		std::cout << eraser.str();
-
-		std::stringstream msg;
-		msg << completedBlocks << " of " << blocks.size();
-		blocksMessage = msg.str();
-		std::cout << blocksMessage;
-	};
-
-	// define our iteration function
-	auto threadedIterate = [&]() -> void
-	{
-		while (!iterationComplete)
+	StackJobPool<QueuedBlock> pool;
+	pool.spinup(blocks.size(), "Block",
+		[&callback](QueuedBlock& details) -> void
 		{
-			// let's get a block to process
-			blockLock.lock();
-
-			if (blocksToProcess.empty())
-			{
-				blockLock.unlock();
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				continue;
-			}
-
-			auto block = blocksToProcess.top();
-			blocksToProcess.pop();
-
-			blockLock.unlock();
-
-			// now lets process it
-			callback(block.baseAddress, block.buffer, block.size);
-			delete[] block.buffer;
-			block.buffer = nullptr;
-
-			// mark it as complete TODO try not to aqcuire lock for this
-			completedBlocks++;
+			callback(details.baseAddress, details.buffer, details.size);
+			delete[] details.buffer;
+			details.buffer = nullptr;
 		}
-	};
+	);
 
-	// fire up the threads; 1 fewer since we're still going too
-	for (size_t i = 0; i < concurentThreadsSupported - 1; i++)
-		workerThreads.push_back(std::thread(threadedIterate));
-
-
-	// start giving the threads stuff to do
 	for (auto block = blocks.cbegin(); block != blocks.cend(); block++)
 	{
 		// queue up this block for scanning
@@ -192,39 +132,14 @@ void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryIn
 			// failures will typically happen when target isn't frozen, as it's
 			// memory allocations will change between the start and end of the scan
 			delete[] qb.buffer;
-			completedBlocks++;
+			pool.incrementCompletionCount();
 			continue;
 		}
 
-		blockLock.lock();
-		blocksToProcess.push(qb);
-		blockLock.unlock();
-
-		updateConsole();
+		pool.addJob(qb);
 	}
 
-	blockLock.lock();
-	while (!blocksToProcess.empty())
-	{
-		blockLock.unlock();
-
-		updateConsole();
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-		blockLock.lock();
-	}
-	blockLock.unlock();
-
-	iterationComplete = true;
-
-	for (auto thread = workerThreads.begin(); thread != workerThreads.end(); thread++)
-		thread->join();
-	workerThreads.clear();
-
-	updateConsole();
-	auto end = std::chrono::high_resolution_clock::now();
-	auto diff = end - start;
-	std::cout << " (Time " << std::chrono::duration<double, std::milli>(diff).count() << "ms)" << std::endl;
+	pool.waitForCompletion();
 }
 
 void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollection &needles, const CompareTypeFlags &compType)

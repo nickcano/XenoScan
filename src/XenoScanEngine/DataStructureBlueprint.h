@@ -41,20 +41,10 @@ public:
 		DataStructureDetails& details) const = 0;
 	virtual std::string getTypeName() const = 0;
 
-	virtual inline void findMatches(
+	virtual void findMatches(
 		const ScannerTargetShPtr &target,
 		const PointerMap &pointerMap,
-		DataStructureResultMap& results)
-	{
-		for (auto ptrItr = pointerMap.cbegin(); ptrItr != pointerMap.cend(); ptrItr++)
-		{
-			DataStructureDetails details;
-			if (this->walkStructure(target, ptrItr->first, pointerMap, details))
-			{
-				results[this->getTypeName()][details.identifier] = details;
-			}
-		}
-	}
+		DataStructureResultMap& results);
 
 	static void findDataStructures(const ScannerTargetShPtr &target, const DataStructureBlueprint::FACTORY_TYPE::KEY_TYPE &key, const PointerMap &pointerMap, DataStructureResultMap& results);
 };

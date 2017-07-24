@@ -62,6 +62,7 @@ file(GLOB HEADER_FILES
     "Assert.h"
     "FastAllocator.h"
     "KeyedFactory.h"
+	"StackJobPool.h"
 )
 file(GLOB SOURCE_FILES
     "FastAllocator.cpp"
