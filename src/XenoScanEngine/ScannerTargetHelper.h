@@ -26,13 +26,15 @@ public:
 	inline bool writeString(const MemoryAddress &adr, const std::string &value) const
 	{
 		auto size = value.length() + 1;
-		return static_cast<const CRTP*>(this)->rawWrite(adr, size * sizeof(std::string::value_type), &value.c_str()[0]);
+		auto val = value.c_str();
+		return static_cast<const CRTP*>(this)->rawWrite(adr, size * sizeof(std::string::value_type), &val[0]);
 	}
 
 	inline bool writeString(const MemoryAddress &adr, const std::wstring &value) const
 	{
 		auto size = value.length() + 1;
-		return static_cast<const CRTP*>(this)->rawWrite(adr, size * sizeof(std::wstring::value_type), &value.c_str()[0]);
+		auto val = value.c_str();
+		return static_cast<const CRTP*>(this)->rawWrite(adr, size * sizeof(std::wstring::value_type), &val[0]);
 	}
 
 

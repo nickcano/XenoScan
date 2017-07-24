@@ -58,6 +58,17 @@ int LuaEngine::settimeout()
 	return this->luaRet(true);
 }
 
+LUAENGINE_EXPORT_FUNCTION(ptrcast, "ptrcast"); // ptrcast(int)
+int LuaEngine::ptrcast()
+{
+	auto args = this->getArguments<LUA_VARIANT_INT>();
+
+	LuaVariant::LuaVariantInt value;
+	args[0].getAsInt(value);
+
+	return this->luaRet((void*)value);
+}
+
 
 LUAENGINE_EXPORT_FUNCTION(attach, "attach"); // attach(type, pid)
 int LuaEngine::attach()

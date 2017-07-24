@@ -36,6 +36,7 @@ public:
 
 	/* EXPORTED FUNCTIONS */
 	int settimeout();
+	int ptrcast();
 
 	int attach();
 	int destroy();
