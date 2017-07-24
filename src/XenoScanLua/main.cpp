@@ -63,6 +63,12 @@ int main(int argc, char** argv)
 	}
 	else
 	{
+		for (int a = 1; a < argc; a++)
+		{
+			std::string path(argv[a]);
+			eng->doFile(std::wstring(path.begin(), path.end()));
+		}
+
 		processInput(eng);
 	}
 
