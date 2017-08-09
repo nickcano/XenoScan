@@ -314,7 +314,7 @@ function sizeof(t)
 	elseif (t == SCAN_VARIANT_UINT64) then return 8
 	elseif (t == SCAN_VARIANT_INT64) then return  8
 	elseif (t == SCAN_VARIANT_DOUBLE) then return 8
-	elseif (t == SCAN_VARIANT_FLOAT) then return  8
+	elseif (t == SCAN_VARIANT_FLOAT) then return  4
 	end
 
 	error("Unsizable type :" .. tostring(t))
