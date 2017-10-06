@@ -7,6 +7,38 @@ function table.icontains(t, val)
 	return false
 end
 
+TYPE_DEFINITIONS = 
+{
+	["ascii"] = {size = false, isNumeric = false, isString = true, type = SCAN_VARIANT_ASCII_STRING},
+	["widestring"] = {size = false, isNumeric = false, isString = true, type = SCAN_VARIANT_WIDE_STRING},
+	["uint8"] = {size = 1, isNumeric = true, isString = false, type = SCAN_VARIANT_UINT8},
+	["int8"] = {size = 1, isNumeric = true, isString = false, type = SCAN_VARIANT_INT8},
+	["uint16"] = {size = 2, isNumeric = true, isString = false, type = SCAN_VARIANT_UINT16},
+	["int16"] = {size = 2, isNumeric = true, isString = false, type = SCAN_VARIANT_INT16},
+	["uint32"] = {size = 4, isNumeric = true, isString = false, type = SCAN_VARIANT_UINT32},
+	["int32"] = {size = 4, isNumeric = true, isString = false, type = SCAN_VARIANT_INT32},
+	["uint64"] = {size = 8, isNumeric = true, isString = false, type = SCAN_VARIANT_UINT64},
+	["int64"] = {size = 8, isNumeric = true, isString = false, type = SCAN_VARIANT_INT64},
+	["double"] = {size = 8, isNumeric = true, isString = false, type = SCAN_VARIANT_DOUBLE},
+	["float"] = {size = 4, isNumeric = true, isString = false, type = SCAN_VARIANT_FLOAT},
+}
+
+local function generateTypeData()
+	local refNames = {}
+	for tname, tdata in pairs(TYPE_DEFINITIONS) do
+		_G[tname] = function(name) return {__name = name, __type = tdata.type} end
+		tdata.construct = _G[tname]
+		tdata.name = tname
+		refNames[#refNames + 1] = tname
+	end
+
+	for _, tname in ipairs(refNames) do
+		TYPE_DEFINITIONS[tostring(_G[tname])] = TYPE_DEFINITIONS[tname]
+		TYPE_DEFINITIONS[TYPE_DEFINITIONS[tname].type] = TYPE_DEFINITIONS[tname]
+	end
+end
+generateTypeData()
+
 
 ATTACHED_PROCESSES = {}
 Process = {}
@@ -76,28 +108,20 @@ function Process:findDataStructures(typename)
 end
 
 function Process:__validateMemoryValueForReadWrite(valueType)
-	local ALLOWED_VARIANT_TYPES =
-	{
-		[tostring(uint8)] =  uint8().__type,          [tostring(int8)] =  int8().__type,
-		[tostring(uint16)] = uint16().__type,         [tostring(int16)] = int16().__type,
-		[tostring(uint32)] = uint32().__type,         [tostring(int32)] = int32().__type,
-		[tostring(uint64)] = uint64().__type,         [tostring(int64)] = int64().__type,
-		[tostring(double)] = double().__type,         [tostring(float)] = float().__type,
-		[tostring(widestring)] = widestring().__type, [tostring(ascii)] = ascii().__type
-	}
-
-	if (type(valueType) == 'table') then
+	local vtype = type(valueType)
+	if (vtype == 'table') then
 		assert(valueType.__type, "Memory read or write must have strong type")
-		for _,v in pairs(ALLOWED_VARIANT_TYPES) do
-			if (v == valueType.__type) then
-				return valueType
-			end
-		end
-		error("Invalid type specified: " .. table.show(valueType, ""))
+		assert(TYPE_DEFINITIONS[valueType.__type], "Invalid type specified: " .. table.show(valueType, ""))
+		return valueType
+	elseif (vtype == 'function') then
+		local retType = TYPE_DEFINITIONS[tostring(valueType)] and valueType() or nil
+		assert(retType, "Invalid type specified: " .. tostring(valueType))
+		return retType
 	else
-		readType = ALLOWED_VARIANT_TYPES[tostring(valueType)] and valueType() or nil
-		assert(readType, "Invalid type specified: " .. tostring(valueType) .. " | " .. tostring(readType))
-		return readType
+		local typeInfo = TYPE_DEFINITIONS[valueType]
+		assert(typeInfo, "Invalid type specified: " .. tostring(valueType))
+		assert(typeInfo.construct, "Invalid type fetched: " .. table.show(typeInfo, ""))
+		return typeInfo.construct()
 	end
 end
 
@@ -218,7 +242,7 @@ function Process:scanFor(scanValue, scanComparator, typeMode)
 	if (success) then
 		success, message = runScan(this.__nativeObject, raw_scanValue, raw_scanType, raw_scanTypeMode, scanComparator)
 	else
-		message = "Unable to deduce scan details for Lua type '" .. type(scanValue) ..  "'."
+		message = "Unable to deduce scan details for Lua type '" .. type(scanValue) ..  "': " .. table.show(scanValue, "")
 	end
 
 	assert(success, message)
@@ -227,47 +251,24 @@ end
 
 function range(a, b, c)
 	local ALLOWED_INPUT_TYPES = {["number"] = true}
-	local ALLOWED_VARIANT_TYPES =
-	{
-		[tostring(uint8)] = true, [tostring(int8)] = true,
-		[tostring(uint16)] = true, [tostring(int16)] = true,
-		[tostring(uint32)] = true, [tostring(int32)] = true,
-		[tostring(uint64)] = true, [tostring(int64)] = true,
-		[tostring(double)] = true, [tostring(float)] = true
-	}
 
 	local valueTransform = function(v) return v end
 	if (c ~= nil) then
-		assert(ALLOWED_VARIANT_TYPES[tostring(a)], "Specified type must be numeric!")
+		local def = TYPE_DEFINITIONS[tostring(a)]
+		assert(def, "Invalid type specified:"  .. table.show(a, ""))
+		assert(def.isNumeric, "Specified type must be numeric!")
 		valueTransform = a
 	end
 
 	local values = (c ~= nil) and {b, c} or {a, b}
-	if (#values ~= 2) then
-		error("Expected either '(type, min, max)' or '(min, max)' as arguments")
-	end
+	assert(#values == 2, "Expected either '(type, min, max)' or '(min, max)' as arguments")
 
 	for _, v in pairs(values) do
-		if (not ALLOWED_INPUT_TYPES[type(v)]) then
-			error("Inputs must be numbers")
-		end
+		assert(ALLOWED_INPUT_TYPES[type(v)], "Inputs must be numbers. Got '" .. type(v) .. "' with value: " .. v)
 	end
 
 	return valueTransform({__min = math.min(unpack(values)), __max = math.max(unpack(values))})
 end
-
-function ascii(name) return {__name = name, __type = SCAN_VARIANT_ASCII_STRING} end
-function widestring(name) return {__name = name, __type = SCAN_VARIANT_WIDE_STRING} end
-function uint8(name) return {__name = name, __type = SCAN_VARIANT_UINT8} end
-function int8(name) return {__name = name, __type = SCAN_VARIANT_INT8} end
-function uint16(name) return {__name = name, __type = SCAN_VARIANT_UINT16} end
-function int16(name) return {__name = name, __type = SCAN_VARIANT_INT16} end
-function uint32(name) return {__name = name, __type = SCAN_VARIANT_UINT32} end
-function int32(name) return {__name = name, __type = SCAN_VARIANT_INT32} end
-function uint64(name) return {__name = name, __type = SCAN_VARIANT_UINT64} end
-function int64(name) return {__name = name, __type = SCAN_VARIANT_INT64} end
-function double(name) return {__name = name, __type = SCAN_VARIANT_DOUBLE} end
-function float(name) return {__name = name, __type = SCAN_VARIANT_FLOAT} end
 
 function struct(...)
 	local structure = {}
@@ -294,36 +295,32 @@ function struct(...)
 end
 
 function sizeof(t)
-	local ALLOWED_VARIANT_TYPES =
-	{
-		[tostring(uint8)] = true, [tostring(int8)] = true,
-		[tostring(uint16)] = true, [tostring(int16)] = true,
-		[tostring(uint32)] = true, [tostring(int32)] = true,
-		[tostring(uint64)] = true, [tostring(int64)] = true,
-		[tostring(double)] = true, [tostring(float)] = true
-	}
+	local vtype = type(t)
 
-	if (type(t) == 'table' and t.__type) then return sizeof(t.__type)
-	elseif (ALLOWED_VARIANT_TYPES[tostring(t)]) then return sizeof(t())
-	elseif (t == SCAN_VARIANT_UINT8) then return  1
-	elseif (t == SCAN_VARIANT_INT8) then return   1
-	elseif (t == SCAN_VARIANT_UINT16) then return 2
-	elseif (t == SCAN_VARIANT_INT16) then return  2
-	elseif (t == SCAN_VARIANT_UINT32) then return 4
-	elseif (t == SCAN_VARIANT_INT32) then return  4
-	elseif (t == SCAN_VARIANT_UINT64) then return 8
-	elseif (t == SCAN_VARIANT_INT64) then return  8
-	elseif (t == SCAN_VARIANT_DOUBLE) then return 8
-	elseif (t == SCAN_VARIANT_FLOAT) then return  4
+	if (vtype == 'table') then
+		if (t.__schema) then
+			local size = 0
+			for _, v in ipairs(t.__schema) do
+				size = size + sizeof(v)
+			end
+			return size
+		else
+			assert(t.__type, "No type specified by table: " .. table.show(t, ""))
+			assert(TYPE_DEFINITIONS[t.__type], "Invalid type specified: " .. table.show(t, ""))
+			return sizeof(t.__type)
+		end
+	else
+		local typeInfo = (vtype == 'function') and TYPE_DEFINITIONS[tostring(t)] or TYPE_DEFINITIONS[t]
+		assert(typeInfo, "Invalid type specified: " .. tostring(t))
+		assert(typeInfo.size, "Unsizable type :" .. table.show(typeInfo, ""))
+		return typeInfo.size
 	end
-
-	error("Unsizable type :" .. tostring(t))
 end
 
 function offsetof(struct, val)
 	assert(type(struct) == "table", "Expected a table, got " .. type(struct))
 	assert(struct.__schema, "No schema found for structure")
-	assert(type(val) == "string", "Expected a string, got " .. type(val))
+	assert(type(val) == "string", "Expected field name as a string, got " .. type(val))
 	assert(struct[val], "Named value doesnt exist in structure: " .. val)
 	
 	local offset = 0
