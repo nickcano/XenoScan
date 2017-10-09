@@ -149,7 +149,7 @@ public:
 				[parseNumbersAsDouble, &iTableValue](lua_State *L) -> void
 			{
 				// TODO: probably type-check the key here and have some error handling mechanism
-				auto key = lua_tonumber(L, KEY_INDEX);
+				auto key = lua_tonumber(L, KEY_INDEX) - 1; // -1 because lua is 1-indexed and we are 0-indexed
 				int32_t valueIndex = (lua_type(L, VALUE_INDEX) == LUA_TTABLE) ? lua_gettop(L) : VALUE_INDEX;
 
 				// fill with nil values up to key

@@ -31,6 +31,7 @@ testStruct = struct(
 	uint32("seven")
 )
 
+SHOW_STRUCT_RESULTS = false
 function findStructureResults()
 	local proc = Process(TEST_PID)
 	proc:newScan()
@@ -39,7 +40,9 @@ function findStructureResults()
 	local results = proc:getResults()
 	proc:destroy()
 
-	return (results == false) and nil or results[TEST_STRUCT_ADDRESS]
+	if (not results) then return nil end
+	if (SHOW_STRUCT_RESULTS) then print(table.show(results, "")) end
+	return results[TEST_STRUCT_ADDRESS]
 end
 
 --------------- TEST STRUCTURE (STATIC) ---------------
@@ -63,3 +66,26 @@ testStruct["six"] = {}
 testStruct["seven"] = range(TEST_STRUCT_SEVEN - 1, TEST_STRUCT_SEVEN + 1)
 
 tests.assertNotNil(findStructureResults(), "Failed to locate test structure (ranges)!")
+
+--------------- TEST ARRAY (RANGE AND PLACEHOLDERS) ---------------
+testStruct = struct(
+	array(uint32("obj"), 7)
+)
+
+testStruct["obj"][1] = range(TEST_STRUCT_ONE - 5, TEST_STRUCT_ONE + 5)
+testStruct["obj"][2] = TEST_STRUCT_TWO
+testStruct["obj"][4] = range(TEST_STRUCT_FOUR - 1, TEST_STRUCT_FOUR + 1)
+testStruct["obj"][5] = TEST_STRUCT_FIVE
+
+tests.assertNotNil(findStructureResults(), "Failed to locate test array (ranges and placeholders)!")
+
+--------------- TEST ARRAY (FILLED)---------------
+testStruct["obj"][1] = TEST_STRUCT_ONE
+testStruct["obj"][2] = TEST_STRUCT_TWO
+testStruct["obj"][3] = TEST_STRUCT_THREE
+testStruct["obj"][4] = TEST_STRUCT_FOUR
+testStruct["obj"][5] = TEST_STRUCT_FIVE
+testStruct["obj"][6] = TEST_STRUCT_SIX
+testStruct["obj"][7] = TEST_STRUCT_SEVEN
+
+tests.assertNotNil(findStructureResults(), "Failed to locate test array (filled)!")

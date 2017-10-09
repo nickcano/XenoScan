@@ -148,6 +148,8 @@ function Process:writeMemory(address, offset, value)
 	if (type(value) == "table" and value.__schema) then
 		local offset = 0
 		for _, v in ipairs(value.__schema) do
+			assert(v.__arraylen == nil, "TODO: implement Process:writeMemory() for arrays!")
+			
 			local val = value[v.__name]
 			if (val and type(val) ~= 'table') then
 				this:writeMemory(address, offset, {__name = val, __type = v.__type})
@@ -245,8 +247,24 @@ function Process:scanFor(scanValue, scanComparator, typeMode)
 		message = "Unable to deduce scan details for Lua type '" .. type(scanValue) ..  "': " .. table.show(scanValue, "")
 	end
 
-	assert(success, message)
+	assert(success, (message or "") .. "\n" .. table.show(scanValue, ""))
 	return success, message
+end
+
+function array(input, len)
+	local msg = "Can only make an array out of strongly-typed objects"
+	assert(type(input) == 'table', msg)
+	assert(input.__type, msg)
+	assert(input.__name, msg)
+	assert(input.__arraylen == nil, "Arrays cannot be nested!")
+	assert(len > 0, "Arrays must have positive, non-zero length! (" .. len .. " specified)")
+
+	local def = TYPE_DEFINITIONS[input.__type]
+	assert(def, "Invalid type specified: "  .. table.show(input, ""))
+	assert(def.isNumeric, "Arrays only support numeric types!")
+
+	input.__arraylen = len
+	return input
 end
 
 function range(a, b, c)
@@ -256,7 +274,7 @@ function range(a, b, c)
 	if (c ~= nil) then
 		local def = TYPE_DEFINITIONS[tostring(a)]
 		assert(def, "Invalid type specified:"  .. table.show(a, ""))
-		assert(def.isNumeric, "Specified type must be numeric!")
+		assert(def.isNumeric, "Ranges only support numeric types!")
 		valueTransform = a
 	end
 
@@ -275,20 +293,23 @@ function struct(...)
 	structure.__schema = {}
 
 	for _, v in ipairs({...}) do
-		if (structure[v.__name]) then
-			error("Duplicate name entry '" .. v.__name .. "' in structure!")
-		end
+		assert(v.__name, "Structure cannot ccontain unnamed value!")
+		assert(structure[v.__name] == nil, "Duplicate name entry '" .. v.__name .. "' in structure!")
+		assert(v.__schema == nil, "Nested custom types are not yet supported (you have a struct in a struct)")
+		assert((v.__arraylen or 1) > 0, "Structure cannot contain 0-length array!")
 
-		if (v.__schema) then
-			error("Nested custom types are not yet supported (you have a struct in a struct)")
-		end
+		local def = TYPE_DEFINITIONS[v.__type]
+		assert(def, "Invalid type specified:"  .. table.show(v, ""))
+		assert(def.isNumeric, "Structures only support numeric types!")
 
-		if (v.__type == SCAN_VARIANT_ASCII_STRING or v.__type == SCAN_VARIANT_ASCII_STRING) then
-			error("Structures containing strings are not yet supported")
-		end
-
-		structure.__schema[#structure.__schema + 1] = {__type = v.__type, __name = v.__name}
+		structure.__schema[#structure.__schema + 1] = {__type = v.__type, __name = v.__name, __arraylen = v.__arraylen}
 		structure[v.__name] = {}
+
+		if (v.__arraylen) then
+			while (#structure[v.__name] < v.__arraylen) do
+				structure[v.__name][#structure[v.__name] + 1] = {}
+			end
+		end
 	end
 
 	return structure

@@ -239,17 +239,56 @@ int LuaEngine::runScan()
 			if (!itName->second.getAsString(memberName)) return this->luaRet(false, "Expected string value for '__name' field!");
 			if (!itType->second.getAsInt(memberType)) return this->luaRet(false, "Expected number value for '__type' field!");
 
-			// once we have the name and type parsed,
-			// look it up the value and add it to
-			// the member list
+
+			// once we've parsed the value name and type, we must
+			// add it to the member list. it can be either a 
+			// single value or an array, so we must handle each case
 			auto itValue = valueTable.find(memberName);
-			if (itValue == valueTable.end()) return this->luaRet(false, std::string("Expected to find '" + memberName + "' in value table!"));
+			if (itValue == valueTable.end())
+				return this->luaRet(false, std::string("Expected to find '" + memberName + "' in value table!"));
 
-			auto member = this->getScanVariantFromLuaVariant(itValue->second, memberType, true);
-			if (member.isNull())
-				return this->luaRet(false, "Unable to handle member type!");
+			// TODO tear array code into getScanVariantFromLuaVariant()
+			// to allow for standalone arrays and maybe even nested arrays.
+			//
+			// NOTE arrays are significantly slower in debug mode,
+			// yet perform roughly the same in release.
+			auto itLen = entry.find("__arraylen");
+			if (itLen != entry.end())
+			{
+				// validate the array and associated lengths
+				// TODO fix the signed unsigned mismatches here
+				LuaVariant::LuaVariantInt arrayLen;
+				if (!itLen->second.getAsInt(arrayLen))
+					return this->luaRet(false, "Expected number value for '__arraylen' field!");
 
-			members.push_back(member);
+				LuaVariant::LuaVariantITable array;
+				if (!itValue->second.getAsITable(array))
+					return this->luaRet(false, std::string("Expected array for array member: '" + memberName + "'"));
+
+				if (arrayLen < array.size())
+					return this->luaRet(false, std::string("More values in array than specified in '__arraylen' field for value: '" + memberName + "'"));
+
+				// create ScanVariants for each array entry
+				std::vector<ScanVariant> arrayMembers;
+				for (auto arrayEntry = array.begin(); arrayEntry != array.end(); arrayEntry++)
+				{
+					auto arrayMember = this->getScanVariantFromLuaVariant(*arrayEntry, memberType, true);
+					arrayMembers.push_back(arrayMember);
+				}
+
+				// add placeholders for missing entries (XenoLua does this for
+				// leading entries, but not for trailing entries, as it doesn't
+				// know the expected size)
+				while (arrayLen > arrayMembers.size())
+					arrayMembers.push_back(ScanVariant::MakePlaceholder(memberType));
+				members.push_back(ScanVariant::FromStruct(arrayMembers));
+			}
+			else
+			{
+				auto member = this->getScanVariantFromLuaVariant(itValue->second, memberType, true);
+				if (member.isNull()) return this->luaRet(false, "Unable to handle member type!");
+				members.push_back(member);
+			}
 		}
 		needle = ScanVariant::FromStruct(members);
 	}
