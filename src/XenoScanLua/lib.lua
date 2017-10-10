@@ -146,13 +146,23 @@ function Process:writeMemory(address, offset, value)
 
 	-- write an entire structure
 	if (type(value) == "table" and value.__schema) then
-		local offset = 0
 		for _, v in ipairs(value.__schema) do
-			assert(v.__arraylen == nil, "TODO: implement Process:writeMemory() for arrays!")
-			
-			local val = value[v.__name]
-			if (val and type(val) ~= 'table') then
-				this:writeMemory(address, offset, {__name = val, __type = v.__type})
+			if (v.__arraylen) then
+				local val = value[v.__name]
+				local valSize = sizeof(v.__type)
+				assert(type(val) == "table", "Table expected as array container!")
+				for index, aval in ipairs(val) do
+					if (aval and type(aval) ~= 'table') then
+						assert(index <= v.__arraylen, "Index is outside of arrays bounds (index: " .. index .. " bounds: " .. v.__arraylen .. ")!")
+						assert(index > 0, "Index must be greater than zero (index: " .. index .. ")!")
+						this:writeMemory(address, offset + ((index - 1) * valSize), {__name = aval, __type = v.__type})
+					end
+				end
+			else
+				local val = value[v.__name]
+				if (val and type(val) ~= 'table') then
+					this:writeMemory(address, offset, {__name = val, __type = v.__type})
+				end
 			end
 			offset = offset + sizeof(v)
 		end
@@ -328,7 +338,7 @@ function sizeof(t)
 		else
 			assert(t.__type, "No type specified by table: " .. table.show(t, ""))
 			assert(TYPE_DEFINITIONS[t.__type], "Invalid type specified: " .. table.show(t, ""))
-			return sizeof(t.__type)
+			return sizeof(t.__type) * (t.__arraylen or 1)
 		end
 	else
 		local typeInfo = (vtype == 'function') and TYPE_DEFINITIONS[tostring(t)] or TYPE_DEFINITIONS[t]

@@ -67,6 +67,8 @@ testStruct["seven"] = range(TEST_STRUCT_SEVEN - 1, TEST_STRUCT_SEVEN + 1)
 
 tests.assertNotNil(findStructureResults(), "Failed to locate test structure (ranges)!")
 
+-- TODO test memory write with structures
+
 --------------- TEST ARRAY (RANGE AND PLACEHOLDERS) ---------------
 testStruct = struct(
 	array(uint32("obj"), 7)
@@ -79,7 +81,7 @@ testStruct["obj"][5] = TEST_STRUCT_FIVE
 
 tests.assertNotNil(findStructureResults(), "Failed to locate test array (ranges and placeholders)!")
 
---------------- TEST ARRAY (FILLED)---------------
+--------------- TEST ARRAY (FILLED) ---------------
 testStruct["obj"][1] = TEST_STRUCT_ONE
 testStruct["obj"][2] = TEST_STRUCT_TWO
 testStruct["obj"][3] = TEST_STRUCT_THREE
@@ -89,3 +91,17 @@ testStruct["obj"][6] = TEST_STRUCT_SIX
 testStruct["obj"][7] = TEST_STRUCT_SEVEN
 
 tests.assertNotNil(findStructureResults(), "Failed to locate test array (filled)!")
+
+--------------- TEST ARRAY (WRITE THEN SCAN)---------------
+for idx, val in ipairs(testStruct["obj"]) do
+	testStruct["obj"][idx] = val + 5
+end
+
+function writeNewStructureValues()
+	local proc = Process(TEST_PID)
+	proc:writeMemory(TEST_STRUCT_ADDRESS, testStruct)
+	proc:destroy()
+end
+writeNewStructureValues(arrayResults)
+
+tests.assertNotNil(findStructureResults(), "Failed to locate test array (write then scan)!")
