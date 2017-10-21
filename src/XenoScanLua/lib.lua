@@ -48,18 +48,22 @@ PROCESS_ATTACH_KEY = "proc"
 
 assert(table.icontains(ATTACH_TARGET_NAMES, PROCESS_ATTACH_KEY), "expected a native proc target type!")
 
-function Process.new(pid)
+function Process.new(target, pid)
 	local this = {}
+
+	if (pid == nil) then
+		pid = tonumber(target)
+		target = PROCESS_ATTACH_KEY
+	end
+
+	assert(pid ~= 0, "pid cannot be 0!")
+
 	if (not ATTACHED_PROCESSES[pid]) then
 		setmetatable(this, Process)
 		this._pid = pid
 
-		if (type(pid) == 'string') then
-			assert(table.icontains(ATTACH_TARGET_NAMES, pid), "Target with type '" .. pid .. "' not implemented!")
-			this.__nativeObject = attach(pid, 0)
-		else
-			this.__nativeObject = attach(PROCESS_ATTACH_KEY, this._pid)
-		end
+		assert(table.icontains(ATTACH_TARGET_NAMES, target), "Target with type '" .. target .. "' not implemented!")
+		this.__nativeObject = attach(target, pid)
 
 		assert(this.__nativeObject, "Failed to attach to process '" .. tostring(pid) .. "'!")
 		ATTACHED_PROCESSES[pid] = this

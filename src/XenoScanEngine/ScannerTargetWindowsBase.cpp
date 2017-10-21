@@ -1,4 +1,4 @@
-#include "ScannerTargetWindows.h"
+#include "ScannerTargetWindowsBase.h"
 
 #include "Assert.h"
 #include "StdListBlueprint.h"
@@ -7,11 +7,12 @@
 
 #include <Windows.h>
 #include <Psapi.h>
+#include <iostream>
 
 #define WIN32_IS_EXECUTABLE_PROT(x) (x == PAGE_EXECUTE || x == PAGE_EXECUTE_READ || x == PAGE_EXECUTE_READWRITE || x == PAGE_EXECUTE_WRITECOPY)
 #define WIN32_IS_WRITEABLE_PROT(x) (x == PAGE_EXECUTE_READWRITE || x == PAGE_READWRITE)
 
-ScannerTargetWindows::ScannerTargetWindows() :
+ScannerTargetWindowsBase::ScannerTargetWindowsBase() :
 	processHandle(NULL)
 {
 	this->supportedBlueprints.insert(StdListBlueprint::Key);
@@ -24,7 +25,7 @@ ScannerTargetWindows::ScannerTargetWindows() :
 	static_assert(sizeof(void*) <= sizeof(MemoryAddress), "MemoryAddress type is too small!");
 }
 
-ScannerTargetWindows::~ScannerTargetWindows()
+ScannerTargetWindowsBase::~ScannerTargetWindowsBase()
 {
 	if (this->processHandle)
 	{
@@ -33,7 +34,7 @@ ScannerTargetWindows::~ScannerTargetWindows()
 	}
 }
 
-bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
+bool ScannerTargetWindowsBase::attach(const ProcessIdentifier &pid)
 {
 	// detach if we're attached to something else
 	if (this->isAttached())
@@ -46,17 +47,9 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 	static_assert(sizeof(pid) == sizeof(DWORD), "Expected size of pid to match size of DWORD on Windows");
 	static_assert(sizeof(this->processHandle) == sizeof(HANDLE), "Expected size of this->processHandle to match size of HANDLE on Windows");
 
-	// open the process
-	DWORD _pid = static_cast<DWORD>(pid);
-	auto handle = OpenProcess(
-		PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_CREATE_THREAD,
-		FALSE,
-		_pid
-	);
-
-	if (!handle)
+	auto handle = this->obtainProcessHandle(pid);
+	if (!handle || handle == INVALID_HANDLE_VALUE)
 		return false;
-
 	this->processHandle = reinterpret_cast<ProcessHandle>(handle);
 
 	// find the main module bounds
@@ -66,7 +59,11 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 
 	MODULEINFO moduleInfo;
 	if (!GetModuleInformation(this->processHandle, (HMODULE)mainModuleStart, &moduleInfo, sizeof(moduleInfo)))
+	{
+		if (GetLastError() == ERROR_PARTIAL_COPY)
+			std::cerr << "ERROR: attempt to attach to a 64bit process from a 32bit XenoScan process!";
 		return false;
+	}
 
 	mainModuleEnd = (MemoryAddress)((size_t)mainModuleStart + moduleInfo.SizeOfImage);
 
@@ -84,12 +81,12 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 	return true;
 }
 
-bool ScannerTargetWindows::isAttached() const
+bool ScannerTargetWindowsBase::isAttached() const
 {
 	return (this->processHandle != 0);
 }
 
-bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const
+bool ScannerTargetWindowsBase::queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const
 {
 	ASSERT(this->isAttached());
 
@@ -117,26 +114,26 @@ bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformati
 	return true;
 }
 
-bool ScannerTargetWindows::getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const
+bool ScannerTargetWindowsBase::getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const
 {
 	start = mainModuleStart;
 	end = mainModuleEnd;
 	return true;
 }
 
-bool ScannerTargetWindows::rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const
+bool ScannerTargetWindowsBase::rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const
 {
 	ASSERT(this->isAttached());
 	return (ReadProcessMemory(this->processHandle, adr, result, objectSize, NULL) != 0);
 }
 
-bool ScannerTargetWindows::rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const
+bool ScannerTargetWindowsBase::rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const
 {
 	ASSERT(this->isAttached());
 	return (WriteProcessMemory(this->processHandle, adr, data, objectSize, NULL) != 0);
 }
 
-MemoryAddress ScannerTargetWindows::getMainModuleBaseAddress() const
+MemoryAddress ScannerTargetWindowsBase::getMainModuleBaseAddress() const
 {
 	// get the address of kernel32.dll
 	HMODULE k32 = GetModuleHandleA("kernel32.dll");

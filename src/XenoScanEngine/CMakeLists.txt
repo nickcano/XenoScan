@@ -19,10 +19,23 @@ file(GLOB SCANNER_TARGET_SOURCE_FILES
 
 if (WIN32)
 	file(GLOB SCANNER_TARGET_NATIVE_HEADER_FILES
-		"ScannerTargetWindows.h"
+		"ScannerTargetWindowsBase.h"
+		"ScannerTargetWindowsStandard.h"
+		"ScannerTargetWindowsDuplicate.h"
 	)
 	file(GLOB SCANNER_TARGET_NATIVE_SOURCE_FILES
-		"ScannerTargetWindows.cpp"
+		"ScannerTargetWindowsBase.cpp"
+		"ScannerTargetWindowsStandard.cpp"
+		"ScannerTargetWindowsDuplicate.cpp"
+	)
+
+	file(GLOB UTILS_NATIVE_HEADER_FILES
+		"WindowsUtils.h"
+		"SystemHandle.h"
+	)
+	file(GLOB UTILS_NATIVE_SOURCE_FILES
+		"WindowsUtils.cpp"
+		"SystemHandle.cpp"
 	)
 else()
 
@@ -81,6 +94,9 @@ add_library(XenoScanEngine STATIC
 	${SCANNER_TARGET_EMULATOR_HEADER_FILES}
 	${SCANNER_TARGET_EMULATOR_SOURCE_FILES}
 
+	${UTILS_NATIVE_HEADER_FILES}
+	${UTILS_NATIVE_SOURCE_FILES}
+
 	${SCANNER_VARIANT_HEADER_FILES}
 	${SCANNER_VARIANT_SOURCE_FILES}
 
@@ -93,11 +109,11 @@ add_library(XenoScanEngine STATIC
 
 target_link_libraries(XenoScanEngine XenoLua)
 
-source_group("Headers"        FILES ${HEADER_FILES})
-source_group("Sources"        FILES ${SOURCE_FILES})
+source_group("Headers"                          FILES ${HEADER_FILES})
+source_group("Sources"                          FILES ${SOURCE_FILES})
 
-source_group("Headers\\Scanner"               FILES ${SCANNER_HEADER_FILES})
-source_group("Sources\\Scanner"               FILES ${SCANNER_SOURCE_FILES})
+source_group("Headers\\Scanner"                 FILES ${SCANNER_HEADER_FILES})
+source_group("Sources\\Scanner"                 FILES ${SCANNER_SOURCE_FILES})
 
 source_group("Headers\\ScannerTarget"           FILES ${SCANNER_TARGET_HEADER_FILES})
 source_group("Sources\\ScannerTarget"           FILES ${SCANNER_TARGET_SOURCE_FILES})
@@ -106,8 +122,11 @@ source_group("Sources\\ScannerTarget\\Native"   FILES ${SCANNER_TARGET_NATIVE_SO
 source_group("Headers\\ScannerTarget\\Emulator" FILES ${SCANNER_TARGET_EMULATOR_HEADER_FILES})
 source_group("Sources\\ScannerTarget\\Emulator" FILES ${SCANNER_TARGET_EMULATOR_SOURCE_FILES})
 
-source_group("Headers\\ScanVariant"           FILES ${SCANNER_VARIANT_HEADER_FILES})
-source_group("Sources\\ScanVariant"           FILES ${SCANNER_VARIANT_SOURCE_FILES})
+source_group("Headers\\Utils\\Native"           FILES ${UTILS_NATIVE_HEADER_FILES})
+source_group("Sources\\Utils\\Native"           FILES ${UTILS_NATIVE_SOURCE_FILES})
 
-source_group("Headers\\Blueprints"            FILES ${SCANNER_BLUEPRINT_HEADER_FILES})
-source_group("Sources\\Blueprints"            FILES ${SCANNER_BLUEPRINT_SOURCE_FILES})
+source_group("Headers\\ScanVariant"             FILES ${SCANNER_VARIANT_HEADER_FILES})
+source_group("Sources\\ScanVariant"             FILES ${SCANNER_VARIANT_SOURCE_FILES})
+
+source_group("Headers\\Blueprints"              FILES ${SCANNER_BLUEPRINT_HEADER_FILES})
+source_group("Sources\\Blueprints"              FILES ${SCANNER_BLUEPRINT_SOURCE_FILES})

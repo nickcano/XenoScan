@@ -4,27 +4,23 @@
 #error This header is for internal library use. Include "ScannerTarget.h" instead.
 #endif
 
-
-// This file is include guarded because we want to ignore it on non-Windows systems.
-// CMake will stop the compiler form seeing it, but it wont stop inclusion.
-#ifdef WIN32 
-#include "ScannerTarget.h"
-
-// We define NativeScannerTarget as ScannerTargetWindows so that the
-// factory will use this class for native processes
-#ifndef NativeScannerTarget
-#define NativeScannerTarget ScannerTargetWindows
-#else
-#error Only one NativeScannerTarget can exist!
+#ifndef WIN32
+#error This header should only be included in the Windows build.
 #endif
 
-class ScannerTargetWindows : public ScannerTarget
+#include "ScannerTarget.h"
+// This is the core implementation for the Windows scanner target.
+// However, we have two flavors:
+//     - ScannerTargetWindowsStandard is what you'd expect, it attaches
+//       to a process using OpenProcess.
+//     - ScannerTargetWindowsDuplicate is different. To bypass certain
+//       anti-cheat frameworks which block OpenProcess, it copies
+//       the handle out of the lsass.exe process.
+class ScannerTargetWindowsBase : public ScannerTarget
 {
 public:
-	static ScannerTarget::FACTORY_TYPE::KEY_TYPE Key;
-
-	ScannerTargetWindows();
-	~ScannerTargetWindows();
+	ScannerTargetWindowsBase();
+	~ScannerTargetWindowsBase();
 
 	virtual bool attach(const ProcessIdentifier &pid);
 	virtual bool isAttached() const;
@@ -36,6 +32,8 @@ protected:
 	virtual bool rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const;
 	virtual bool rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const;
 
+	virtual ProcessHandle obtainProcessHandle(const ProcessIdentifier &pid) const = 0;
+
 private:
 	ProcessHandle processHandle;
 	MemoryAddress mainModuleStart, mainModuleEnd;
@@ -43,5 +41,3 @@ private:
 
 	MemoryAddress getMainModuleBaseAddress() const;
 };
-
-#endif
