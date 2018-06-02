@@ -37,7 +37,9 @@ public:
 			SCAN_VARIANT_INT64,
 			SCAN_VARIANT_DOUBLE,
 			SCAN_VARIANT_FLOAT,
-		SCAN_VARIANT_NUMERICTYPES_END = SCAN_VARIANT_FLOAT,
+			SCAN_VARIANT_FILETIME64,
+			SCAN_VARIANT_TICKTIME32,
+		SCAN_VARIANT_NUMERICTYPES_END = SCAN_VARIANT_TICKTIME32,
 
 		SCAN_VARIANT_ALLTYPES_END = SCAN_VARIANT_NUMERICTYPES_END,
 
@@ -178,6 +180,8 @@ public:
 			memory
 		);
 	}
+
+	void prepareForSearch(const ScannerTarget* const target);
 
 	void searchForMatchesInChunk(
 		const uint8_t* chunk,

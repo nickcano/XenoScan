@@ -6,8 +6,8 @@
 	of ScanVariant. This cannot be in it's own .cpp file because templated member function
 	declarations are only visible in the .cpp file in which they are declared.
 */
-template <typename TYPE, bool UNSIGNED, bool FLOATING>
-void ScanVariantUnderlyingNumericTypeTraits<TYPE, UNSIGNED, FLOATING>::fromString(const std::wstring& input, ScanVariant& output) const
+template <typename TYPE, bool UNSIGNED, bool FLOATING, uint32_t BASE_TYPE>
+void ScanVariantUnderlyingNumericTypeTraits<TYPE, UNSIGNED, FLOATING, BASE_TYPE>::fromString(const std::wstring& input, ScanVariant& output) const
 {
 	TYPE value;
 	uint8_t buffer[sizeof(int64_t)];
@@ -25,20 +25,24 @@ ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::
 	new ScanVariantUnderlyingAsciiStringTypeTraits(),
 	new ScanVariantUnderlyingWideStringTypeTraits(),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint8_t, true, false>(L"uint8", L"%u"),
-	new ScanVariantUnderlyingNumericTypeTraits<int8_t, false, false>(L"int8", L"%d"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint8_t, true, false, 0>(L"uint8", L"%u"),
+	new ScanVariantUnderlyingNumericTypeTraits<int8_t, false, false, 0>(L"int8", L"%d"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint16_t, true, false>(L"uint16", L"%u"),
-	new ScanVariantUnderlyingNumericTypeTraits<int16_t, false, false>(L"int16", L"%d"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint16_t, true, false, 0>(L"uint16", L"%u"),
+	new ScanVariantUnderlyingNumericTypeTraits<int16_t, false, false, 0>(L"int16", L"%d"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint32_t, true, false>(L"uint32", L"%u"),
-	new ScanVariantUnderlyingNumericTypeTraits<int32_t, false, false>(L"int32", L"%d"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint32_t, true, false, 0>(L"uint32", L"%u"),
+	new ScanVariantUnderlyingNumericTypeTraits<int32_t, false, false, 0>(L"int32", L"%d"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<uint64_t, true, false>(L"uint64", L"%llu"),
-	new ScanVariantUnderlyingNumericTypeTraits<int64_t, false, false>(L"int64", L"%lld"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint64_t, true, false, 0>(L"uint64", L"%llu"),
+	new ScanVariantUnderlyingNumericTypeTraits<int64_t, false, false, 0>(L"int64", L"%lld"),
 
-	new ScanVariantUnderlyingNumericTypeTraits<double, true, true>(L"double", L"%f"),
-	new ScanVariantUnderlyingNumericTypeTraits<float, true, true>(L"float", L"%f"),
+	new ScanVariantUnderlyingNumericTypeTraits<double, true, true, 0>(L"double", L"%f"),
+	new ScanVariantUnderlyingNumericTypeTraits<float, true, true, 0>(L"float", L"%f"),
+
+	// these dynamic types are unsigned, but base types are signed to allow for negative offsets
+	new ScanVariantUnderlyingNumericTypeTraits<uint64_t, true, false, ScanVariant::SCAN_VARIANT_INT64>(L"filetime64", L"%llu"),
+	new ScanVariantUnderlyingNumericTypeTraits<uint32_t, true, false, ScanVariant::SCAN_VARIANT_INT32>(L"ticktime32", L"%u"),
 
 	new ScanVariantUnderlyingStructureTypeTraits(),
 
@@ -163,10 +167,30 @@ const ScanVariant ScanVariant::FromNumberTyped(const ptrdiff_t &value, const Sca
 	ScanVariant v;
 	v.type = type;
 	
-	auto size = v.getTypeTraits()->getSize();
-	ASSERT(sizeof(value) >= size);
+	auto traits = v.getTypeTraits();
+	if (traits->isDynamicNumericType())
+	{
+		// dynamic types have an underlying numeric type
+		// which acts as a delta to the dynamic value.
+		// this delta gets stored as the first element in
+		// `valueStruct` so that we can use it while preparing
+		// whatever is required by the dynamic type
+		ScanVariant b;
+		b.type = traits->getDynamicNumericTypeBase();
 
-	memcpy(&v.numericValue, &value, size);
+		auto size = b.getTypeTraits()->getSize();
+		ASSERT(sizeof(value) >= size);
+		memcpy(&b.numericValue, &value, size);
+		b.setSizeAndValue();
+		v.valueStruct.push_back(b);
+	}
+	else
+	{
+		auto size = traits->getSize();
+		ASSERT(sizeof(value) >= size);
+		memcpy(&v.numericValue, &value, size);
+	}
+
 	v.setSizeAndValue();
 	return v;
 }
@@ -413,6 +437,48 @@ const bool ScanVariant::writeToTarget(const std::shared_ptr<class ScannerTarget>
 		return ret;
 	}
 	return false;
+}
+
+void ScanVariant::prepareForSearch(const ScannerTarget* const target)
+{
+	// TODO: we probably want to re-write the endianess code to set up comparators
+	// inside of this function. HOWEVER, as of now, this only is called upon first scan,
+	// which may be important to consider
+
+	auto traits = this->getTypeTraits();
+	if (traits->isStructureType() || this->isRange())
+	{
+		for (auto member = this->valueStruct.begin(); member != this->valueStruct.end(); member++)
+			member->prepareForSearch(target);
+	}
+	else if (traits->isDynamicNumericType())
+	{
+		// valuestruct holds one object: the offset from the base value
+		ASSERT(this->valueStruct.size() == 1);
+		ASSERT(this->valueStruct[0].type == traits->getDynamicNumericTypeBase());
+
+		// TODO: can we abstract this more so type stuff is transparent?
+		if (this->type == SCAN_VARIANT_FILETIME64)
+		{
+			auto delta = this->valueStruct[0].valueint64;
+			this->valueuint64 = target->getFileTime64();
+			if (delta >= 0) // postive, so add
+				this->valueuint64 += static_cast<uint64_t>(delta);
+			else // subtract but do it without type mismatch
+				this->valueuint64 -= static_cast<uint64_t>(delta * -1);
+		}
+		else if (this->type == SCAN_VARIANT_TICKTIME32)
+		{
+			auto delta = this->valueStruct[0].valueint32;
+			this->valueuint32 = target->getTickTime32();
+			if (delta >= 0) // postive, so add
+				this->valueuint32 += static_cast<uint32_t>(delta);
+			else // subtract but do it without type mismatch
+				this->valueuint32 -= static_cast<uint32_t>(delta * -1);
+		}
+		else
+			ASSERT(false);
+	}
 }
 
 void ScanVariant::searchForMatchesInChunk(

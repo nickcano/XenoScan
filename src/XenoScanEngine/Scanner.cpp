@@ -33,7 +33,11 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 
 	ScanResultCollection needles;
 	if (type == SCAN_INFER_TYPE_EXACT)
-		needles.push_back(needle);
+	{
+		auto preparedNeedle = needle;
+		preparedNeedle.prepareForSearch(target.get());
+		needles.push_back(preparedNeedle);
+	}
 	else
 	{
 		auto rawValue = needle.toString();

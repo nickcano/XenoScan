@@ -21,6 +21,8 @@ TYPE_DEFINITIONS =
 	["int64"] = {size = 8, isNumeric = true, isString = false, type = SCAN_VARIANT_INT64},
 	["double"] = {size = 8, isNumeric = true, isString = false, type = SCAN_VARIANT_DOUBLE},
 	["float"] = {size = 4, isNumeric = true, isString = false, type = SCAN_VARIANT_FLOAT},
+	["filetime64"] = {size = 8, isNumeric = true, isString = false, type = SCAN_VARIANT_FILETIME64},
+	["ticktime32"] = {size = 4, isNumeric = true, isString = false, type = SCAN_VARIANT_TICKTIME32},
 }
 
 local function generateTypeData()

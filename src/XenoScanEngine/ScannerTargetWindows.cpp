@@ -124,6 +124,22 @@ bool ScannerTargetWindows::getMainModuleBounds(MemoryAddress &start, MemoryAddre
 	return true;
 }
 
+uint64_t ScannerTargetWindows::getFileTime64() const
+{
+	FILETIME time;
+	GetSystemTimeAsFileTime(&time);
+
+	uint64_t ret;
+	static_assert(sizeof(ret) <= sizeof(time), "FILETIME must be able to fill uint64_t!");
+	memcpy(&ret, &time, sizeof(ret));
+	return ret;
+}
+
+uint32_t ScannerTargetWindows::getTickTime32() const
+{
+	return static_cast<uint32_t>(GetTickCount());
+}
+
 bool ScannerTargetWindows::rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const
 {
 	ASSERT(this->isAttached());
