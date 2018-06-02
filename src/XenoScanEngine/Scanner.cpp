@@ -40,6 +40,9 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 	}
 	else
 	{
+		// TODO: properly handle dynamic types here,
+		// meaning making sure we use the correct size and call
+		// `prepareForSearch()`
 		auto rawValue = needle.toString();
 		auto range = this->typeRangeMap[type];
 		for (size_t i = range.low; i <= range.high; i++)

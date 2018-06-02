@@ -442,8 +442,7 @@ const bool ScanVariant::writeToTarget(const std::shared_ptr<class ScannerTarget>
 void ScanVariant::prepareForSearch(const ScannerTarget* const target)
 {
 	// TODO: we probably want to re-write the endianess code to set up comparators
-	// inside of this function. HOWEVER, as of now, this only is called upon first scan,
-	// which may be important to consider
+	// inside of this function. 
 
 	auto traits = this->getTypeTraits();
 	if (traits->isStructureType() || this->isRange())
