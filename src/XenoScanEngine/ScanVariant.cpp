@@ -108,6 +108,8 @@ const ScanVariant ScanVariant::FromRawBuffer(const uint8_t* buffer, const size_t
 		v.type = reference.getType();
 		if (reference.isPlaceholder())
 			v.type = (reference.getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN) + SCAN_VARIANT_NUMERICTYPES_BEGIN;
+		else if (reference.isDynamic())
+			v.type = (reference.getTypeTraits()->getDynamicNumericTypeBase() + SCAN_VARIANT_NUMERICTYPES_BEGIN);
 
 		auto traits = v.getTypeTraits();
 		auto size = traits->getSize();
@@ -160,7 +162,7 @@ const ScanVariant ScanVariant::FromMemoryAddress(const MemoryAddress& valueMemor
 	return v;
 }
 
-const ScanVariant ScanVariant::FromNumberTyped(const ptrdiff_t &value, const ScanVariantType &type)
+const ScanVariant ScanVariant::FromNumberTyped(const uint64_t &value, const ScanVariantType &type)
 {
 	ASSERT(type >= SCAN_VARIANT_NUMERICTYPES_BEGIN && type <= SCAN_VARIANT_NUMERICTYPES_END);
 
@@ -197,6 +199,7 @@ const ScanVariant ScanVariant::FromNumberTyped(const ptrdiff_t &value, const Sca
 
 const ScanVariant ScanVariant::FromStringTyped(const std::string& input, const ScanVariantType& type)
 {
+	// TODO maybe handle dynamic types here?
 	std::wstring wideString(input.begin(), input.end());
 	return ScanVariant::FromStringTyped(wideString, type);
 }
@@ -204,6 +207,7 @@ const ScanVariant ScanVariant::FromStringTyped(const std::wstring& input, const 
 {
 	ASSERT(type >= SCAN_VARIANT_ALLTYPES_BEGIN && type <= SCAN_VARIANT_ALLTYPES_END);
 
+	// TODO maybe handle dynamic types here?
 	auto traits = UnderlyingTypeTraits[type];
 	ScanVariant ret;
 	traits->fromString(input, ret);
@@ -237,6 +241,10 @@ const ScanVariant ScanVariant::FromTargetMemory(const std::shared_ptr<class Scan
 	}
 	else if (traits->isNumericType())
 	{
+		auto targetType = type;
+		if (traits->isDynamicNumericType())
+			targetType = traits->getDynamicNumericTypeBase();
+
 		auto size = traits->getSize();
 		auto buffer = new uint8_t[size];
 		if (!target->readArray(address, size, buffer))
@@ -249,7 +257,7 @@ const ScanVariant ScanVariant::FromTargetMemory(const std::shared_ptr<class Scan
 		traits->copyFromBuffer(buffer, size, target->isLittleEndian(), &v.numericValue);
 		delete[] buffer;
 
-		v.type = type;
+		v.type = targetType;
 		v.setSizeAndValue();
 		return v;
 	}

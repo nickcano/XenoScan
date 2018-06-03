@@ -27,7 +27,7 @@ tests.assertEqual(
 	'sizeof(uint32) and sizeof(uint32(1)) are not equal'
 )
 
--- sizeof on structs
+-- sizeof/offsetof on structs
 testStruct = struct(
 	uint8("one"),
 	int8("two"),

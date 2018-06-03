@@ -32,7 +32,7 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 	ASSERT(comp >= SCAN_INFER_TYPE_ALL_TYPES && comp <= SCAN_INFER_TYPE_END);
 
 	ScanResultCollection needles;
-	if (type == SCAN_INFER_TYPE_EXACT)
+	if (type == SCAN_INFER_TYPE_EXACT || needle.isDynamic())
 	{
 		auto preparedNeedle = needle;
 		preparedNeedle.prepareForSearch(target.get());
@@ -40,16 +40,16 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 	}
 	else
 	{
-		// TODO: properly handle dynamic types here,
-		// meaning making sure we use the correct size and call
-		// `prepareForSearch()`
 		auto rawValue = needle.toString();
 		auto range = this->typeRangeMap[type];
 		for (size_t i = range.low; i <= range.high; i++)
 		{
 			auto val = ScanVariant::FromStringTyped(rawValue, i);
 			if (!val.isNull())
+			{
+				val.prepareForSearch(target.get());
 				needles.push_back(val);
+			}
 		}
 	}
 

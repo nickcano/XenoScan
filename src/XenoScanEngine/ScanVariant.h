@@ -64,7 +64,7 @@ public:
 
 	static const ScanVariant FromVariantRange(const ScanVariant& min, const ScanVariant& max);
 	static const ScanVariant FromMemoryAddress(const MemoryAddress& valueMemoryAddress);
-	static const ScanVariant FromNumberTyped(const ptrdiff_t& value, const ScanVariantType& type);
+	static const ScanVariant FromNumberTyped(const uint64_t& value, const ScanVariantType& type);
 
 	static const ScanVariant FromStringTyped(const std::string& input,  const ScanVariantType& type);
 	static const ScanVariant FromStringTyped(const std::wstring& input, const ScanVariantType& type);
@@ -134,7 +134,10 @@ public:
 	{
 		return (this->type >= SCAN_VARIANT_RANGE_BEGIN && this->type <= SCAN_VARIANT_RANGE_END);
 	}
-
+	inline const bool isDynamic() const
+	{
+		return this->getTypeTraits()->isDynamicNumericType();
+	}
 	inline const bool isPlaceholder() const
 	{
 		return (this->type >= SCAN_VARIANT_PLACEHOLDER_BEGIN && this->type <= SCAN_VARIANT_PLACEHOLDER_END);

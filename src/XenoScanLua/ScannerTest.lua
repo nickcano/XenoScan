@@ -92,7 +92,7 @@ testStruct["obj"][7] = TEST_STRUCT_SEVEN
 
 tests.assertNotNil(findStructureResults(), "Failed to locate test array (filled)!")
 
---------------- TEST ARRAY (WRITE THEN SCAN)---------------
+--------------- TEST ARRAY (WRITE THEN SCAN) ---------------
 for idx, val in ipairs(testStruct["obj"]) do
 	testStruct["obj"][idx] = val + 5
 end
@@ -105,3 +105,29 @@ end
 writeNewStructureValues(arrayResults)
 
 tests.assertNotNil(findStructureResults(), "Failed to locate test array (write then scan)!")
+
+--------------- TEST TIMESTAMP DYNAMIC VARIANTS ---------------
+function dynamicValueSearch(val, expected)
+	local proc = Process(TEST_PID)
+	proc:newScan()
+	proc:scanFor(val)
+	local results = proc:getResults()
+	proc:destroy()
+	return results[expected]
+end
+
+-- these tests can fail if previous tests take more than 50 seconds
+testStruct = struct(
+	filetime64("ft")
+)
+testStruct.ft = range(-500000000, 500000000)
+
+filestamp1 = dynamicValueSearch(testStruct, TEST_FILETIME64_ADDRESS)
+tests.assertNotNil(filestamp1, "Failed to locate filetime64!")
+
+testStruct = struct(
+	ticktime32("tt")
+)
+testStruct.tt = range(-50000, 50000)
+tickstamp1 = dynamicValueSearch(testStruct, TEST_TICKTIME32_ADDRESS)
+tests.assertNotNil(tickstamp1, "Failed to locate ticktime32!")
