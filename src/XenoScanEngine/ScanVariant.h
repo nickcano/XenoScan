@@ -27,16 +27,18 @@ public:
 		SCAN_VARIANT_STRINGTYPES_END = SCAN_VARIANT_WIDE_STRING,
 
 		SCAN_VARIANT_NUMERICTYPES_BEGIN,
-			SCAN_VARIANT_UINT8 = SCAN_VARIANT_NUMERICTYPES_BEGIN,
-			SCAN_VARIANT_INT8,
-			SCAN_VARIANT_UINT16,
-			SCAN_VARIANT_INT16,
-			SCAN_VARIANT_UINT32,
-			SCAN_VARIANT_INT32,
-			SCAN_VARIANT_UINT64,
-			SCAN_VARIANT_INT64,
-			SCAN_VARIANT_DOUBLE,
-			SCAN_VARIANT_FLOAT,
+			SCAN_VARIANT_NUMERICTYPES_INFERABLE_BEGIN = SCAN_VARIANT_NUMERICTYPES_BEGIN,
+				SCAN_VARIANT_UINT8 = SCAN_VARIANT_NUMERICTYPES_BEGIN,
+				SCAN_VARIANT_INT8,
+				SCAN_VARIANT_UINT16,
+				SCAN_VARIANT_INT16,
+				SCAN_VARIANT_UINT32,
+				SCAN_VARIANT_INT32,
+				SCAN_VARIANT_UINT64,
+				SCAN_VARIANT_INT64,
+				SCAN_VARIANT_DOUBLE,
+				SCAN_VARIANT_FLOAT,
+			SCAN_VARIANT_NUMERICTYPES_INFERABLE_END = SCAN_VARIANT_FLOAT,
 			SCAN_VARIANT_FILETIME64,
 			SCAN_VARIANT_TICKTIME32,
 		SCAN_VARIANT_NUMERICTYPES_END = SCAN_VARIANT_TICKTIME32,
@@ -96,6 +98,8 @@ public:
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::wstring,                    valueWideString,   SCAN_VARIANT_WIDE_STRING);
 
 
+	const bool isCompatibleWith(const ScanVariant& other, const bool strict) const;
+
 	inline const size_t getSize() const
 	{
 		return this->valueSize;
@@ -104,20 +108,18 @@ public:
 	{
 		return this->type;
 	}
-	inline const ScanVariantUnderlyingTypeTraits* getTypeTraits() const
+	inline const ScanVariantType ScanVariant::getUnderlyingType() const
 	{
 		if (this->isRange())
-		{
-			auto offset = this->getType() - SCAN_VARIANT_RANGE_BEGIN;
-			return UnderlyingTypeTraits[SCAN_VARIANT_NUMERICTYPES_BEGIN + offset];
-		}
+			return this->getType() - SCAN_VARIANT_RANGE_BEGIN;
 		else if (this->isPlaceholder())
-		{
-			auto offset = this->getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN;
-			return UnderlyingTypeTraits[SCAN_VARIANT_NUMERICTYPES_BEGIN + offset];
-		}
+			return this->getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN;
 		else
-			return UnderlyingTypeTraits[this->getType()];
+			return this->getType();
+	}
+	inline const ScanVariantUnderlyingTypeTraits* getTypeTraits() const
+	{
+		return UnderlyingTypeTraits[this->getUnderlyingType()];
 	}
 
 	const std::wstring getTypeName() const;
@@ -136,7 +138,7 @@ public:
 	}
 	inline const bool isDynamic() const
 	{
-		return this->getTypeTraits()->isDynamicNumericType();
+		return this->getTypeTraits()->isDynamicType();
 	}
 	inline const bool isPlaceholder() const
 	{
@@ -220,7 +222,6 @@ private:
 	};
 
 	size_t valueSize;
-
 
 	typedef const CompareTypeFlags (*InternalComparator)(
 		const ScanVariant* const obj,

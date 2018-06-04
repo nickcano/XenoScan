@@ -9,9 +9,10 @@
 
 Scanner::Scanner() : scanState(nullptr)
 {
+	// TODO need to disclude dynamic types from all_types inferance
 	this->typeRangeMap[SCAN_INFER_TYPE_ALL_TYPES] = typeRange(ScanVariant::SCAN_VARIANT_ALLTYPES_BEGIN, ScanVariant::SCAN_VARIANT_ALLTYPES_END);
 	this->typeRangeMap[SCAN_INFER_TYPE_STRING_TYPES] = typeRange(ScanVariant::SCAN_VARIANT_STRINGTYPES_BEGIN, ScanVariant::SCAN_VARIANT_STRINGTYPES_END);
-	this->typeRangeMap[SCAN_INFER_TYPE_NUMERIC_TYPES] = typeRange(ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN, ScanVariant::SCAN_VARIANT_NUMERICTYPES_END);
+	this->typeRangeMap[SCAN_INFER_TYPE_NUMERIC_TYPES] = typeRange(ScanVariant::SCAN_VARIANT_NUMERICTYPES_INFERABLE_BEGIN, ScanVariant::SCAN_VARIANT_NUMERICTYPES_INFERABLE_END);
 
 	this->scanState.reset(new ScanState());
 }
@@ -38,7 +39,7 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 		preparedNeedle.prepareForSearch(target.get());
 		needles.push_back(preparedNeedle);
 	}
-	else
+	else // TODO: should type infer only work on first scan?
 	{
 		auto rawValue = needle.toString();
 		auto range = this->typeRangeMap[type];
@@ -218,7 +219,8 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 		{
 			for (auto needle = needles.begin(); needle != needles.end(); needle++)
 			{
-				if (result->getType() == needle->getType())
+				// TODO: will rescan with ranges work because of this ??????
+				if (needle->isCompatibleWith(*result, true))
 				{
 					bytesToRead = std::max(bytesToRead, result->getSize());
 					searchNeedles.push_back(*needle);

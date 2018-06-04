@@ -96,7 +96,7 @@ function Process:getResults(offset, count)
 	local this = type(self) == 'table' and self or Process.new(self)
 
 	count = count or this:getResultsSize()
-	if (count == 0) then return false end
+	if (count == 0) then return {} end
 	offset = offset or 0
 
 	local result, message = getScanResults(this.__nativeObject, offset, count)

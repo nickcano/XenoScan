@@ -45,7 +45,7 @@ bool ScannerTest::runTest(const LuaEngineShPtr &engine)
 
 	// timestamp dynamic variant tests stuff
 	GetSystemTimeAsFileTime((LPFILETIME)&this->filetime64); // TODO make generic
-	this->ticktime32 = (uint32_t)GetTickCount();
+	this->ticktime32 = (uint32_t)GetTickCount(); // same
 	engine->pushGlobal("TEST_FILETIME64_ADDRESS", (void*)&this->filetime64);
 	engine->pushGlobal("TEST_TICKTIME32_ADDRESS", (void*)&this->ticktime32);
 
