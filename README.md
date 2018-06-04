@@ -3,6 +3,9 @@
 
 *XenoScan* is written in C++ with a Lua frontend, and I've been working on advanced functionality that goes beyond anything that has been in any other memory scanners I've seen. Notably, it has a way to enumerate and return all complex data structures (such as std::list and std::map) in the target's memory space, and it can even scan for any class instances and group the discovered instances by their underlying types.
 
+## Communication
+If you need to get in touch with me, want a place to chat, or have a question, my [Discord](https://discord.gg/2cfR9AA) is the best place.
+
 ## Sub-projects
 
 ### XenoLua
