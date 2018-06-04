@@ -221,7 +221,6 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 		{
 			for (auto needle = needles.begin(); needle != needles.end(); needle++)
 			{
-				// TODO: will rescan with ranges work because of this ??????
 				if (needle->isCompatibleWith(*result, true))
 				{
 					bytesToRead = std::max(bytesToRead, result->getSize());
