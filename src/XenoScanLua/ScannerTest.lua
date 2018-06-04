@@ -35,7 +35,7 @@ testStruct = struct(
 	uint32("seven")
 )
 
-SHOW_STRUCT_RESULTS = true
+SHOW_STRUCT_RESULTS = false
 function findStructureResults()
 	local proc = Process(TEST_PID)
 	proc:newScan()
