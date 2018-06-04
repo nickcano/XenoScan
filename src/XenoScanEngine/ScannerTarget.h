@@ -21,6 +21,9 @@ public:
 	virtual bool queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const = 0;
 	virtual bool getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const = 0;
 
+	virtual uint64_t getFileTime64() const = 0;
+	virtual uint32_t getTickTime32() const = 0;
+
 protected:
 	bool littleEndian;
 	size_t pointerSize;

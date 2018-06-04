@@ -27,17 +27,21 @@ public:
 		SCAN_VARIANT_STRINGTYPES_END = SCAN_VARIANT_WIDE_STRING,
 
 		SCAN_VARIANT_NUMERICTYPES_BEGIN,
-			SCAN_VARIANT_UINT8 = SCAN_VARIANT_NUMERICTYPES_BEGIN,
-			SCAN_VARIANT_INT8,
-			SCAN_VARIANT_UINT16,
-			SCAN_VARIANT_INT16,
-			SCAN_VARIANT_UINT32,
-			SCAN_VARIANT_INT32,
-			SCAN_VARIANT_UINT64,
-			SCAN_VARIANT_INT64,
-			SCAN_VARIANT_DOUBLE,
-			SCAN_VARIANT_FLOAT,
-		SCAN_VARIANT_NUMERICTYPES_END = SCAN_VARIANT_FLOAT,
+			SCAN_VARIANT_NUMERICTYPES_INFERABLE_BEGIN = SCAN_VARIANT_NUMERICTYPES_BEGIN,
+				SCAN_VARIANT_UINT8 = SCAN_VARIANT_NUMERICTYPES_BEGIN,
+				SCAN_VARIANT_INT8,
+				SCAN_VARIANT_UINT16,
+				SCAN_VARIANT_INT16,
+				SCAN_VARIANT_UINT32,
+				SCAN_VARIANT_INT32,
+				SCAN_VARIANT_UINT64,
+				SCAN_VARIANT_INT64,
+				SCAN_VARIANT_DOUBLE,
+				SCAN_VARIANT_FLOAT,
+			SCAN_VARIANT_NUMERICTYPES_INFERABLE_END = SCAN_VARIANT_FLOAT,
+			SCAN_VARIANT_FILETIME64,
+			SCAN_VARIANT_TICKTIME32,
+		SCAN_VARIANT_NUMERICTYPES_END = SCAN_VARIANT_TICKTIME32,
 
 		SCAN_VARIANT_ALLTYPES_END = SCAN_VARIANT_NUMERICTYPES_END,
 
@@ -45,7 +49,7 @@ public:
 		SCAN_VARIANT_STRUCTURE,
 		SCAN_VARIANT_NULL, // null is the last type with traits defined
 
-		// Need to make sure we always handle these types special (check getTypeTraits() function)
+		// Need to make sure we always handle these types special (check getUnderlyingType() function)
 		SCAN_VARIANT_RANGE_BEGIN,
 		SCAN_VARIANT_RANGE_END = (SCAN_VARIANT_RANGE_BEGIN + (SCAN_VARIANT_NUMERICTYPES_END - SCAN_VARIANT_NUMERICTYPES_BEGIN)),
 
@@ -62,7 +66,7 @@ public:
 
 	static const ScanVariant FromVariantRange(const ScanVariant& min, const ScanVariant& max);
 	static const ScanVariant FromMemoryAddress(const MemoryAddress& valueMemoryAddress);
-	static const ScanVariant FromNumberTyped(const ptrdiff_t& value, const ScanVariantType& type);
+	static const ScanVariant FromNumberTyped(const uint64_t& value, const ScanVariantType& type);
 
 	static const ScanVariant FromStringTyped(const std::string& input,  const ScanVariantType& type);
 	static const ScanVariant FromStringTyped(const std::wstring& input, const ScanVariantType& type);
@@ -94,6 +98,8 @@ public:
 	SCAN_VARIANT_EXPLICIT_CONSTRUCTOR(String, std::wstring,                    valueWideString,   SCAN_VARIANT_WIDE_STRING);
 
 
+	const bool isCompatibleWith(const ScanVariant& other, const bool strict) const;
+
 	inline const size_t getSize() const
 	{
 		return this->valueSize;
@@ -102,20 +108,18 @@ public:
 	{
 		return this->type;
 	}
-	inline const ScanVariantUnderlyingTypeTraits* getTypeTraits() const
+	inline const ScanVariantType ScanVariant::getUnderlyingType() const
 	{
 		if (this->isRange())
-		{
-			auto offset = this->getType() - SCAN_VARIANT_RANGE_BEGIN;
-			return UnderlyingTypeTraits[SCAN_VARIANT_NUMERICTYPES_BEGIN + offset];
-		}
+			return (SCAN_VARIANT_NUMERICTYPES_BEGIN + (this->getType() - SCAN_VARIANT_RANGE_BEGIN));
 		else if (this->isPlaceholder())
-		{
-			auto offset = this->getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN;
-			return UnderlyingTypeTraits[SCAN_VARIANT_NUMERICTYPES_BEGIN + offset];
-		}
+			return (SCAN_VARIANT_NUMERICTYPES_BEGIN + (this->getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN));
 		else
-			return UnderlyingTypeTraits[this->getType()];
+			return this->getType();
+	}
+	inline const ScanVariantUnderlyingTypeTraits* getTypeTraits() const
+	{
+		return UnderlyingTypeTraits[this->getUnderlyingType()];
 	}
 
 	const std::wstring getTypeName() const;
@@ -132,7 +136,10 @@ public:
 	{
 		return (this->type >= SCAN_VARIANT_RANGE_BEGIN && this->type <= SCAN_VARIANT_RANGE_END);
 	}
-
+	inline const bool isDynamic() const
+	{
+		return this->getTypeTraits()->isDynamicType();
+	}
 	inline const bool isPlaceholder() const
 	{
 		return (this->type >= SCAN_VARIANT_PLACEHOLDER_BEGIN && this->type <= SCAN_VARIANT_PLACEHOLDER_END);
@@ -179,6 +186,8 @@ public:
 		);
 	}
 
+	void prepareForSearch(const ScannerTarget* const target);
+
 	void searchForMatchesInChunk(
 		const uint8_t* chunk,
 		const size_t &chunkSize,
@@ -213,7 +222,6 @@ private:
 	};
 
 	size_t valueSize;
-
 
 	typedef const CompareTypeFlags (*InternalComparator)(
 		const ScanVariant* const obj,

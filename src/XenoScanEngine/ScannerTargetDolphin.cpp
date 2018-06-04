@@ -130,7 +130,17 @@ bool ScannerTargetDolphin::getMainModuleBounds(MemoryAddress &start, MemoryAddre
 {
 	start = 0;
 	end = 0;
-	return false;
+	return false; // TODO: implement
+}
+
+uint64_t ScannerTargetDolphin::getFileTime64() const
+{
+	return 0; // TODO: implement
+}
+
+uint32_t ScannerTargetDolphin::getTickTime32() const
+{
+	return 0; // TODO: implement
 }
 
 bool ScannerTargetDolphin::rawRead(const MemoryAddress &adr, const size_t objectSize, void* result) const

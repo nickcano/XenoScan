@@ -9,9 +9,14 @@
 
 Scanner::Scanner() : scanState(nullptr)
 {
-	this->typeRangeMap[SCAN_INFER_TYPE_ALL_TYPES] = typeRange(ScanVariant::SCAN_VARIANT_ALLTYPES_BEGIN, ScanVariant::SCAN_VARIANT_ALLTYPES_END);
-	this->typeRangeMap[SCAN_INFER_TYPE_STRING_TYPES] = typeRange(ScanVariant::SCAN_VARIANT_STRINGTYPES_BEGIN, ScanVariant::SCAN_VARIANT_STRINGTYPES_END);
-	this->typeRangeMap[SCAN_INFER_TYPE_NUMERIC_TYPES] = typeRange(ScanVariant::SCAN_VARIANT_NUMERICTYPES_BEGIN, ScanVariant::SCAN_VARIANT_NUMERICTYPES_END);
+	this->inferCrosswalkStrings = ScanVariantTypeRange(ScanVariant::SCAN_VARIANT_STRINGTYPES_BEGIN, ScanVariant::SCAN_VARIANT_STRINGTYPES_END);
+	this->inferCrosswalkNumbers = ScanVariantTypeRange(ScanVariant::SCAN_VARIANT_NUMERICTYPES_INFERABLE_BEGIN, ScanVariant::SCAN_VARIANT_NUMERICTYPES_INFERABLE_END);
+	this->inferCrosswalkAll.add(this->inferCrosswalkStrings);
+	this->inferCrosswalkAll.add(this->inferCrosswalkNumbers);
+
+	this->inferTypeCrosswalk[SCAN_INFER_TYPE_STRING_TYPES] = &this->inferCrosswalkStrings;
+	this->inferTypeCrosswalk[SCAN_INFER_TYPE_NUMERIC_TYPES] = &this->inferCrosswalkNumbers;
+	this->inferTypeCrosswalk[SCAN_INFER_TYPE_ALL_TYPES] = &this->inferCrosswalkAll;
 
 	this->scanState.reset(new ScanState());
 }
@@ -32,18 +37,23 @@ void Scanner::runScan(const ScannerTargetShPtr &target, const ScanVariant &needl
 	ASSERT(comp >= SCAN_INFER_TYPE_ALL_TYPES && comp <= SCAN_INFER_TYPE_END);
 
 	ScanResultCollection needles;
-	if (type == SCAN_INFER_TYPE_EXACT)
-		needles.push_back(needle);
-	else
+	if (type == SCAN_INFER_TYPE_EXACT || needle.isDynamic())
+	{
+		auto preparedNeedle = needle;
+		preparedNeedle.prepareForSearch(target.get());
+		needles.push_back(preparedNeedle);
+	}
+	else // TODO: should type infer only work on first scan?
 	{
 		auto rawValue = needle.toString();
-		auto range = this->typeRangeMap[type];
-		for (size_t i = range.low; i <= range.high; i++)
-		{
-			auto val = ScanVariant::FromStringTyped(rawValue, i);
+		this->inferTypeCrosswalk[type]->iterate([&needles, &target, rawValue](ScanVariant::ScanVariantType type) -> void {
+			auto val = ScanVariant::FromStringTyped(rawValue, type);
 			if (!val.isNull())
+			{
+				val.prepareForSearch(target.get());
 				needles.push_back(val);
-		}
+			}
+		});
 	}
 
 	if (this->scanState->isFirstScan())
@@ -211,7 +221,7 @@ void Scanner::doReScan(const ScannerTargetShPtr &target, const ScanResultCollect
 		{
 			for (auto needle = needles.begin(); needle != needles.end(); needle++)
 			{
-				if (result->getType() == needle->getType())
+				if (needle->isCompatibleWith(*result, true))
 				{
 					bytesToRead = std::max(bytesToRead, result->getSize());
 					searchNeedles.push_back(*needle);

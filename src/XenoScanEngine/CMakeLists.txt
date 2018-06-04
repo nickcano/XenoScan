@@ -38,12 +38,12 @@ file(GLOB SCANNER_TARGET_EMULATOR_SOURCE_FILES
 file(GLOB SCANNER_VARIANT_HEADER_FILES
 	"ScanVariant.h"
 	"ScanVariantTypeTraits.h"
+	"ScanVariantTypeTraits.hpp"
 	"ScanVariantComparator.h"
 )
 
 file(GLOB SCANNER_VARIANT_SOURCE_FILES
 	"ScanVariant.cpp"
-	"ScanVariantTypeTraits.cpp"
 )
 
 
