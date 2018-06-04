@@ -49,7 +49,7 @@ public:
 		SCAN_VARIANT_STRUCTURE,
 		SCAN_VARIANT_NULL, // null is the last type with traits defined
 
-		// Need to make sure we always handle these types special (check getTypeTraits() function)
+		// Need to make sure we always handle these types special (check getUnderlyingType() function)
 		SCAN_VARIANT_RANGE_BEGIN,
 		SCAN_VARIANT_RANGE_END = (SCAN_VARIANT_RANGE_BEGIN + (SCAN_VARIANT_NUMERICTYPES_END - SCAN_VARIANT_NUMERICTYPES_BEGIN)),
 
@@ -111,9 +111,9 @@ public:
 	inline const ScanVariantType ScanVariant::getUnderlyingType() const
 	{
 		if (this->isRange())
-			return this->getType() - SCAN_VARIANT_RANGE_BEGIN;
+			return (SCAN_VARIANT_NUMERICTYPES_BEGIN + (this->getType() - SCAN_VARIANT_RANGE_BEGIN));
 		else if (this->isPlaceholder())
-			return this->getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN;
+			return (SCAN_VARIANT_NUMERICTYPES_BEGIN + (this->getType() - SCAN_VARIANT_PLACEHOLDER_BEGIN));
 		else
 			return this->getType();
 	}
