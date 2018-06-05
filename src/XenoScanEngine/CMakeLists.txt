@@ -68,6 +68,15 @@ file(GLOB SOURCE_FILES
     "FastAllocator.cpp"
 )
 
+if (MSVC)
+	file(GLOB DEBUG_HELP_FILES
+		"ScanVariant.natvis"
+	)
+else()
+	file(GLOB DEBUG_HELP_FILES
+	)
+endif()
+
 add_definitions(-DXENOSCANENGINE_LIB)
 
 add_library(XenoScanEngine STATIC
@@ -89,12 +98,16 @@ add_library(XenoScanEngine STATIC
 
 	${SOURCE_FILES}
 	${HEADER_FILES}
+
+	${DEBUG_HELP_FILES}
 )
 
 target_link_libraries(XenoScanEngine XenoLua)
 
 source_group("Headers"        FILES ${HEADER_FILES})
 source_group("Sources"        FILES ${SOURCE_FILES})
+
+source_group("Natvis"         FILES ${DEBUG_HELP_FILES})
 
 source_group("Headers\\Scanner"               FILES ${SCANNER_HEADER_FILES})
 source_group("Sources\\Scanner"               FILES ${SCANNER_SOURCE_FILES})

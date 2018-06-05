@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="ScanVariant">
+    <DisplayString Condition="type==SCAN_VARIANT_ASCII_STRING">ASCII {valueAsciiString}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_WIDE_STRING">WIDE {valueWideString}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_UINT8">uint8_t {valueuint8}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_INT8">int8_t {valueint8}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_UINT16">uint16_t {valueuint16}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_INT16">int16_t {valueint16}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_UINT32">uint32_t {valueuint32}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_INT32">int32_t {valueint32}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_UINT64">uint64_t {valueuint64}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_INT64">int64_t {valueint64}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_DOUBLE">double {valueDouble}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_FLOAT">float {valueFloat}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_FILETIME64">filetime64 += {valueStruct[0].valueint64}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_TICKTIME32">ticktime32 += {valueStruct[0].valueint32}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_STRUCTURE">struct {{ size={valueStruct.size()} }}</DisplayString>
+    <DisplayString Condition="type&gt;=SCAN_VARIANT_RANGE_BEGIN &amp;&amp; type&lt;=SCAN_VARIANT_RANGE_END">range {{ {valueStruct[0]}, {valueStruct[1]} }}</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_UINT8">uint8_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_INT8">int8_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_UINT16">uint16_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_INT16">int16_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_UINT32">uint32_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_INT32">int32_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_UINT64">uint64_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_INT64">int64_t wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_DOUBLE">double wildcard</DisplayString>
+    <DisplayString Condition="type==SCAN_VARIANT_PLACEHOLDER_BEGIN+SCAN_VARIANT_FLOAT">float wildcard</DisplayString>
+    <Expand>
+      <Item Condition="type==SCAN_VARIANT_ASCII_STRING" Name="[Value]">valueAsciiString</Item>
+      <Item Condition="type==SCAN_VARIANT_WIDE_STRING" Name="[Value]">valueWideString</Item>
+      <Item Condition="type==SCAN_VARIANT_UINT8" Name="[Value]">valueuint8</Item>
+      <Item Condition="type==SCAN_VARIANT_INT8" Name="[Value]">valueint8</Item>
+      <Item Condition="type==SCAN_VARIANT_UINT16" Name="[Value]">valueuint16</Item>
+      <Item Condition="type==SCAN_VARIANT_INT16" Name="[Value]">valueint16</Item>
+      <Item Condition="type==SCAN_VARIANT_UINT32" Name="[Value]">valueuint32</Item>
+      <Item Condition="type==SCAN_VARIANT_INT32" Name="[Value]">valueint32</Item>
+      <Item Condition="type==SCAN_VARIANT_UINT64" Name="[Value]">valueuint64</Item>
+      <Item Condition="type==SCAN_VARIANT_INT64" Name="[Value]">valueint64</Item>
+      <Item Condition="type==SCAN_VARIANT_DOUBLE" Name="[Value]">valueDouble</Item>
+      <Item Condition="type==SCAN_VARIANT_FLOAT" Name="[Value]">valueFloat</Item>
+      <IndexListItems>
+        <Size>valueStruct.size()</Size>
+        <ValueNode>(valueStruct[$i])</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+</AutoVisualizer>
