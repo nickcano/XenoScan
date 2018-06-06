@@ -11,44 +11,8 @@
 #include "ScanVariant.h"
 #include "ScanResult.h"
 #include "ScanState.h"
+#include "RangeList.h"
 
-
-
-class ScanVariantTypeCollection
-{
-public:
-	virtual const void iterate(std::function<void(ScanVariant::ScanVariantType type)> callback) const = 0;
-};
-
-class ScanVariantTypeRange : public ScanVariantTypeCollection
-{
-public:
-	ScanVariantTypeRange(ScanVariant::ScanVariantType low, ScanVariant::ScanVariantType high) : low(low), high(high) {}
-	ScanVariantTypeRange() : low(ScanVariant::SCAN_VARIANT_ALLTYPES_BEGIN), high(ScanVariant::SCAN_VARIANT_ALLTYPES_BEGIN) {}
-	virtual const void iterate(std::function<void(ScanVariant::ScanVariantType type)> callback) const
-	{
-		for (auto i = this->low; i < this->high; i++)
-			callback(i);
-	}
-private:
-	ScanVariant::ScanVariantType low, high;
-};
-
-class ScanVariantTypeRangeAggregate : public ScanVariantTypeCollection
-{
-public:
-	void add(ScanVariantTypeRange range)
-	{
-		this->ranges.push_back(range);
-	}
-	virtual const void iterate(std::function<void(ScanVariant::ScanVariantType type)> callback) const
-	{
-		for (auto&& range : this->ranges)
-			range.iterate(callback);
-	}
-private:
-	std::vector<ScanVariantTypeRange> ranges;
-};
 
 class Scanner
 {
@@ -93,10 +57,13 @@ public:
 	void runDataStructureScan(const ScannerTargetShPtr &target, const std::string &type);
 	
 private:
+	typedef IRangeList<ScanVariant::ScanVariantType> IScanVariantTypeRange;
+	typedef RangeList<ScanVariant::ScanVariantType> ScanVariantTypeRange;
+	typedef RangeListAggregate<ScanVariant::ScanVariantType> ScanVariantTypeRangeAggregate;
 	ScanVariantTypeRange inferCrosswalkStrings;
 	ScanVariantTypeRange inferCrosswalkNumbers;
 	ScanVariantTypeRangeAggregate inferCrosswalkAll;
-	ScanVariantTypeCollection* inferTypeCrosswalk[SCAN_INFER_TYPE_END + 1];
+	IScanVariantTypeRange* inferTypeCrosswalk[SCAN_INFER_TYPE_END + 1];
 
 	MemoryInformationCollection getScannableBlocks(const ScannerTargetShPtr &target) const;
 
