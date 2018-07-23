@@ -4,6 +4,7 @@
 #include "ScanVariantTypeTraits.hpp"
 
 #include "ScanVariantSearchContextDefault.h"
+#include "ScanVariantSearchContextString.h"
 
 ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::SCAN_VARIANT_NULL + 1] =
 {
@@ -503,6 +504,16 @@ void ScanVariant::prepareForSearch(const ScannerTarget* const target)
 		else
 			ASSERT(false);
 	}
+	else if (this->getType() == SCAN_VARIANT_ASCII_STRING)
+		this->searchContex = std::make_shared<ScanVariantSearchContextString<std::string>>(
+			&ScanVariant::compareAsciiStringToBuffer,
+			this->valueAsciiString
+		);
+	else if (this->getType() == SCAN_VARIANT_WIDE_STRING)
+		this->searchContex = std::make_shared<ScanVariantSearchContextString<std::wstring>>(
+			&ScanVariant::compareWideStringToBuffer,
+			this->valueWideString
+		);
 }
 
 void ScanVariant::searchForMatchesInChunk(
@@ -658,9 +669,15 @@ void ScanVariant::setSizeAndValue()
 	else if (traits->isNumericType())
 		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareNumericToBuffer);
 	else if (this->getType() == SCAN_VARIANT_ASCII_STRING)
-		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareAsciiStringToBuffer);
+		this->searchContex = std::make_shared<ScanVariantSearchContextString<std::string>>(
+			&ScanVariant::compareAsciiStringToBuffer,
+			this->valueAsciiString
+		);
 	else if (this->getType() == SCAN_VARIANT_WIDE_STRING)
-		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareWideStringToBuffer);
+		this->searchContex = std::make_shared<ScanVariantSearchContextString<std::wstring>>(
+			&ScanVariant::compareWideStringToBuffer,
+			this->valueWideString
+		);
 	else if (traits->isStructureType())
 		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareStructureToBuffer);
 	else if (this->getType() != SCAN_VARIANT_NULL)

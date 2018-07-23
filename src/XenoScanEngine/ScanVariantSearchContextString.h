@@ -1,24 +1,69 @@
-/*	// TODO 1: clean up, maybe work into comparator system? essentially, move all
-	//         logic into the ScanVariantTypeTraits implementations
-	// TODO 2: we should pre-initialize the array of character indices before
-	//         the entire search rather than doing it for every chunk
-	// TODO 3: get cmake working with /std:c++17
-	if (traits->isStringType() && compType == Scanner::SCAN_COMPARE_EQUALS)
-	{
-		if (this->type == SCAN_VARIANT_ASCII_STRING)
-		{
-			auto schunk = std::string(&chunk[0], &chunk[chunkSize]);
-			auto searcher = std::boyer_moore_horspool_searcher<std::string::const_iterator>(this->valueAsciiString.cbegin(), this->valueAsciiString.cend());
-			auto res = schunk.begin();
+#pragma once
+#include <stdint.h>
+#include "ScannerTypes.h"
+#include "ScanVariantTypeTraits.h"
+#include "ScanVariant.h"
+#include "ScanVariantSearchContextDefault.h"
 
+#include <algorithm>
+#include <functional>
+
+/* TODO
+	I really need to fix the copy/move issue that's going on with
+	ScanVariant, because it's causing a shitstorm with data being
+	passed into this class and carrying between copies...
+*/
+template<typename STRING_TYPE>
+class ScanVariantSearchContextString : public ScanVariantSearchContextDefault
+{
+public:
+	ScanVariantSearchContextString(const InternalComparator comp, const STRING_TYPE& str)
+		: ScanVariantSearchContextDefault(comp), string(str), searcher(string.cbegin(), string.cend())
+	{}
+
+	virtual void searchForMatchesInChunk(
+		const ScanVariant* const obj,
+		const uint8_t* chunk,
+		const size_t &chunkSize,
+		const CompareTypeFlags &compType,
+		const MemoryAddress &startAddress,
+		const bool &isLittleEndian,
+		std::vector<size_t> &locations) const
+	{
+		if (compType == Scanner::SCAN_COMPARE_EQUALS)
+		{
+			auto schunk = STRING_TYPE(
+				(STRING_TYPE::value_type*)&chunk[0],
+				(STRING_TYPE::value_type*)&chunk[chunkSize]
+			);
+			auto res = schunk.cbegin();
 			while (true)
 			{
-				res = std::search(res, schunk.end(), searcher);
-				if (res == schunk.end())
+				res = std::search(res, schunk.cend(), searcher);
+				if (res == schunk.cend())
 					break;
-				locations.push_back(res - schunk.begin());
+
+				auto index = (res - schunk.cbegin()) * sizeof(STRING_TYPE::value_type);
+				locations.push_back(index);
 				res++;
 			}
-			return;
 		}
-	}*/
+		else
+		{
+			ScanVariantSearchContextDefault::searchForMatchesInChunk(
+				obj,
+				chunk,
+				chunkSize,
+				compType,
+				startAddress,
+				isLittleEndian,
+				locations
+			);
+		}
+	}
+
+private:
+	typedef std::boyer_moore_horspool_searcher<typename STRING_TYPE::const_iterator> InternalSearcher;
+	STRING_TYPE string;
+	InternalSearcher searcher;
+};
