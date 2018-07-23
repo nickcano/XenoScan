@@ -22,8 +22,8 @@ tests.assertNotNil = function(a, messgae)
 end
 
 tests.assert = function(value, message)
-	TEST_STATUS = value
-	if (not TEST_STATUS) then
+	TEST_STATUS = TEST_STATUS and value
+	if (not value) then
 		TEST_MESSAGES[#TEST_MESSAGES + 1] = message
 	end
 end

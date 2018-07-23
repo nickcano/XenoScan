@@ -3,8 +3,7 @@
 
 #include "ScanVariantTypeTraits.hpp"
 
-#include <functional>
-#include <algorithm>
+#include "ScanVariantSearchContextDefault.h"
 
 ScanVariantUnderlyingTypeTraits* ScanVariant::UnderlyingTypeTraits[ScanVariant::SCAN_VARIANT_NULL + 1] =
 {
@@ -515,68 +514,20 @@ void ScanVariant::searchForMatchesInChunk(
 		std::vector<size_t> &locations) const
 {
 	ASSERT(this->valueSize > 0);
-	ASSERT(this->compareToBuffer != nullptr); // can happen if it's a null scan variant
 	if (chunkSize < this->valueSize) return;
 
-	auto traits = this->getTypeTraits();
-
-	// TODO 1: clean up, maybe work into comparator system? essentially, move all
-	//         logic into the ScanVariantTypeTraits implementations
-	// TODO 2: we should pre-initialize the array of character indices before
-	//         the entire search rather than doing it for every chunk
-	// TODO 3: get cmake working with /std:c++17
-	if (traits->isStringType() && compType == Scanner::SCAN_COMPARE_EQUALS)
-	{
-		if (this->type == SCAN_VARIANT_ASCII_STRING)
-		{
-			auto schunk = std::string(&chunk[0], &chunk[chunkSize]);
-			auto searcher = std::boyer_moore_horspool_searcher<std::string::const_iterator>(this->valueAsciiString.cbegin(), this->valueAsciiString.cend());
-			auto res = schunk.begin();
-
-			while (true)
-			{
-				res = std::search(res, schunk.end(), searcher);
-				if (res == schunk.end())
-					break;
-				locations.push_back(res - schunk.begin());
-				res++;
-			}
-			return;
-		}
-	}
-
-
-	size_t desiredAlignment = traits->getAlignment();
-	size_t chunkAlignment = (size_t)startAddress % desiredAlignment;
-	size_t startOffset = (chunkAlignment == 0) ? 0 : desiredAlignment - chunkAlignment;
-	size_t scanEndAt = chunkSize - this->valueSize;
-
-	auto comp = isLittleEndian ? traits->getComparator() : traits->getBigEndianComparator();
-	auto size = this->valueSize;
-	auto numericValue = &this->numericValue;
-	auto asciiValue = this->valueAsciiString.c_str();
-	auto wideValue = this->valueWideString.c_str();
-
-	for (size_t i = startOffset; i <= scanEndAt; )
-	{
-		auto res = this->compareToBuffer(
-			this, comp, size,
-			isLittleEndian,
-			numericValue,
-			asciiValue, wideValue,
-			&chunk[i]
-		);
-
-		// this won't let us use placeholders unless we're in a structure.
-		// to change this needs to check for SCAN_COMPARE_ALWAYS_MATCH
-		if ((res & compType) != 0)
-		{
-			locations.push_back(i);
-			i += this->valueSize; // TODO: maybe make overlap checking optional?
-		}
-		else
-			i += desiredAlignment;
-	}
+	auto context = this->searchContex.get();
+	ASSERT(context != nullptr); // can happen if it's a null scan variant
+	
+	context->searchForMatchesInChunk(
+		this,
+		chunk,
+		chunkSize,
+		compType,
+		startAddress,
+		isLittleEndian,
+		locations
+	);
 }
 
 const CompareTypeFlags ScanVariant::compareRangeToBuffer(
@@ -584,9 +535,6 @@ const CompareTypeFlags ScanVariant::compareRangeToBuffer(
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
 	const bool &isLittleEndian,
-	const void* const numericBuffer,
-	const void* const asciiBuffer,
-	const void* const wideBuffer,
 	const void* const target)
 {
 	auto minRes = comparator(&obj->valueStruct[0].numericValue, target);
@@ -602,12 +550,9 @@ const CompareTypeFlags ScanVariant::compareNumericToBuffer(
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
 	const bool &isLittleEndian,
-	const void* const numericBuffer,
-	const void* const asciiBuffer,
-	const void* const wideBuffer,
 	const void* const target)
 {
-	return comparator(numericBuffer, target);
+	return comparator(&obj->numericValue, target);
 }
 
 const CompareTypeFlags ScanVariant::comparePlaceholderToBuffer(
@@ -615,9 +560,6 @@ const CompareTypeFlags ScanVariant::comparePlaceholderToBuffer(
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
 	const bool &isLittleEndian,
-	const void* const numericBuffer,
-	const void* const asciiBuffer,
-	const void* const wideBuffer,
 	const void* const target)
 {
 	return Scanner::SCAN_COMPARE_ALWAYS_MATCH;
@@ -627,9 +569,6 @@ const CompareTypeFlags ScanVariant::compareStructureToBuffer(
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
 	const bool &isLittleEndian,
-	const void* const numericBuffer,
-	const void* const asciiBuffer,
-	const void* const wideBuffer,
 	const void* const target)
 {
 	size_t offset = 0;
@@ -653,9 +592,6 @@ const CompareTypeFlags ScanVariant::compareAsciiStringToBuffer(
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
 	const bool &isLittleEndian,
-	const void* const numericBuffer,
-	const void* const asciiBuffer,
-	const void* const wideBuffer,
 	const void* const target)
 {
 	auto buf = (uint8_t*)target;
@@ -663,7 +599,7 @@ const CompareTypeFlags ScanVariant::compareAsciiStringToBuffer(
 	memcpy(&terminator, &buf[valueSize - sizeof(terminator)], sizeof(terminator));
 	if (terminator == (std::string::value_type)0)
 	{
-		auto res = strcmp((std::string::value_type*)asciiBuffer, (std::string::value_type*)target);
+		auto res = strcmp(obj->valueAsciiString.c_str(), (std::string::value_type*)target);
 		if (res == 0) return Scanner::SCAN_COMPARE_EQUALS;
 		else if (res > 0) return Scanner::SCAN_COMPARE_GREATER_THAN;
 		else return Scanner::SCAN_COMPARE_LESS_THAN;
@@ -675,9 +611,6 @@ const CompareTypeFlags ScanVariant::compareWideStringToBuffer(
 	const ScanVariantComparator &comparator,
 	const size_t &valueSize,
 	const bool &isLittleEndian,
-	const void* const numericBuffer,
-	const void* const asciiBuffer,
-	const void* const wideBuffer,
 	const void* const target)
 {
 	auto buf = (uint8_t*)target;
@@ -685,7 +618,7 @@ const CompareTypeFlags ScanVariant::compareWideStringToBuffer(
 	memcpy(&terminator, &buf[valueSize - sizeof(terminator)], sizeof(terminator));
 	if (terminator == (std::wstring::value_type)0)
 	{
-		auto res = wcscmp((std::wstring::value_type*)wideBuffer, (std::wstring::value_type*)target);
+		auto res = wcscmp(obj->valueWideString.c_str(), (std::wstring::value_type*)target);
 		if (res == 0) return Scanner::SCAN_COMPARE_EQUALS;
 		else if (res > 0) return Scanner::SCAN_COMPARE_GREATER_THAN;
 		else return Scanner::SCAN_COMPARE_LESS_THAN;
@@ -695,7 +628,7 @@ const CompareTypeFlags ScanVariant::compareWideStringToBuffer(
 
 void ScanVariant::setSizeAndValue()
 {
-	this->compareToBuffer = nullptr;
+	this->searchContex.reset();
 
 	// first, we'll set the size and value properly
 	auto traits = this->getTypeTraits();
@@ -719,17 +652,17 @@ void ScanVariant::setSizeAndValue()
 	// we do this to avoid type-checking at compare time.
 	// we avoid std:bind and other helps for speed.
 	if (this->isRange())
-		this->compareToBuffer = &ScanVariant::compareRangeToBuffer;
+		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareRangeToBuffer);
 	else if (this->isPlaceholder())
-		this->compareToBuffer = &ScanVariant::comparePlaceholderToBuffer;
+		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::comparePlaceholderToBuffer);
 	else if (traits->isNumericType())
-		this->compareToBuffer = &ScanVariant::compareNumericToBuffer;
+		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareNumericToBuffer);
 	else if (this->getType() == SCAN_VARIANT_ASCII_STRING)
-		this->compareToBuffer = &ScanVariant::compareAsciiStringToBuffer;
+		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareAsciiStringToBuffer);
 	else if (this->getType() == SCAN_VARIANT_WIDE_STRING)
-		this->compareToBuffer = &ScanVariant::compareWideStringToBuffer;
+		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareWideStringToBuffer);
 	else if (traits->isStructureType())
-		this->compareToBuffer = &ScanVariant::compareStructureToBuffer;
+		this->searchContex = std::make_shared<ScanVariantSearchContextDefault>(&ScanVariant::compareStructureToBuffer);
 	else if (this->getType() != SCAN_VARIANT_NULL)
 		ASSERT(false); // didn't find a comparator!
 }

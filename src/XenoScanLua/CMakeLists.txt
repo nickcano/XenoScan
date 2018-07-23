@@ -35,6 +35,9 @@ add_executable(XenoScanLua ${LUA_LIB_FILES} ${LUA_TEST_FILES} ${SOURCE_FILES} ${
 target_link_libraries(XenoScanLua XenoLua)
 target_link_libraries(XenoScanLua XenoScanEngine)
 
+set_property(TARGET XenoScanLua PROPERTY CXX_STANDARD 17)
+set_property(TARGET XenoScanLua PROPERTY CXX_STANDARD_REQUIRED ON)
+
 source_group("Scripts\\Libs"        FILES ${LUA_LIB_FILES})
 source_group("Scripts\\Tests"       FILES ${LUA_TEST_FILES})
 

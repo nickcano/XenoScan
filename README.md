@@ -22,6 +22,8 @@ Additionally, this project contains some test code that ensures everything is wo
 ## Compiling
 *XenoScan* uses *CMake*, and has been tested with Visual Studio 2017. In theory, you should be able to build the code with any modernish compiler, as long as you use CMake to generate the project files. Before you can compile, you will need to make sure you've checked out the submodules. Once that's done, you'll also have to build the *luajit* submodule so *XenoScan* can link against the libraries.
 
+By modernish, I mean anything that supports C++17, as the code uses that standard. Additionally, your CMake version should be at least 3.10.
+
 If you're using Visual Studio, this should be easy. Simply run `buildmsvc2017.bat` from a *Developer Command Prompt for VS*. As an example, to build a project for *Visual Studio 2017*, I run
 
 ```
