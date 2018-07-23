@@ -67,10 +67,10 @@ struct ScanResultMapComparator
 
 typedef std::allocator<ScanResultAddress> ScanResultAddressAllocator;
 typedef std::allocator<ScanVariant> ScanVariantAllocator;
-typedef std::vector<ScanVariant, ScanVariantAllocator> ScanResultCollection;
+typedef std::vector<ScanVariant/*, ScanVariantAllocator*/> ScanResultCollection;
 typedef std::pair<ScanResultLocationShPtr, ScanResultCollection> ScanResultMapValueType;
 
 typedef std::allocator<ScanResultMapValueType> ScanResultMapAllocator;
 //typedef FastAllocator<ScanResultMapValueType> ScanResultMapAllocator; // custom allocator; currently not enabled
 
-typedef std::map<ScanResultLocationShPtr, ScanResultCollection, ScanResultMapComparator, ScanResultMapAllocator> ScanResultMap;
+typedef std::map<ScanResultLocationShPtr, ScanResultCollection, ScanResultMapComparator/*, ScanResultMapAllocator*/> ScanResultMap;
