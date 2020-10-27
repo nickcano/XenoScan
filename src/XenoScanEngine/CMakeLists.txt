@@ -40,6 +40,9 @@ file(GLOB SCANNER_VARIANT_HEADER_FILES
 	"ScanVariantTypeTraits.h"
 	"ScanVariantTypeTraits.hpp"
 	"ScanVariantComparator.h"
+	"ScanVariantSearchContext.h"
+	"ScanVariantSearchContextDefault.h"
+	"ScanVariantSearchContextString.h"
 )
 
 file(GLOB SCANNER_VARIANT_SOURCE_FILES
@@ -104,6 +107,9 @@ add_library(XenoScanEngine STATIC
 )
 
 target_link_libraries(XenoScanEngine XenoLua)
+
+set_property(TARGET XenoScanEngine PROPERTY CXX_STANDARD 17)
+set_property(TARGET XenoScanEngine PROPERTY CXX_STANDARD_REQUIRED ON)
 
 source_group("Headers"        FILES ${HEADER_FILES})
 source_group("Sources"        FILES ${SOURCE_FILES})

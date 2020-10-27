@@ -8,6 +8,8 @@
 #include "ScanVariantTypeTraits.h"
 #include "ScannerTypes.h"
 
+#include "ScanVariantSearchContext.h"
+
 class ScanVariant
 {
 public:
@@ -174,16 +176,9 @@ public:
 	// TODO: test string scans, test all integer type scans
 	inline const CompareTypeFlags compareTo(const uint8_t* memory, const bool &isLittleEndian) const
 	{
-		return this->compareToBuffer(
-			this,
-			isLittleEndian ? this->getTypeTraits()->getComparator() : this->getTypeTraits()->getBigEndianComparator(),
-			this->valueSize,
-			isLittleEndian,
-			&this->numericValue,
-			this->valueAsciiString.c_str(),
-			this->valueWideString.c_str(),
-			memory
-		);
+		auto context = this->searchContex.get();
+		ASSERT(context != nullptr); // can happen if it's a null scan variant
+		return context->compareToBuffer(this, isLittleEndian, memory);
 	}
 
 	void prepareForSearch(const ScannerTarget* const target);
@@ -222,71 +217,43 @@ private:
 	};
 
 	size_t valueSize;
-
-	typedef const CompareTypeFlags (*InternalComparator)(
-		const ScanVariant* const obj,
-		const ScanVariantComparator &comparator,
-		const size_t &valueSize,
-		const bool &isLittleEndian,
-		const void* const numericBuffer,
-		const void* const asciiBuffer,
-		const void* const wideBuffer,
-		const void* const target);
-	InternalComparator compareToBuffer;
+	std::shared_ptr<ScanVariantSearchContext> searchContex;
 
 	static const CompareTypeFlags compareRangeToBuffer(
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
 		const bool &isLittleEndian,
-		const void* const numericBuffer,
-		const void* const asciiBuffer,
-		const void* const wideBuffer,
 		const void* const target);
 	static const CompareTypeFlags compareNumericToBuffer(
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
 		const bool &isLittleEndian,
-		const void* const numericBuffer,
-		const void* const asciiBuffer,
-		const void* const wideBuffer,
 		const void* const target);
 	static const CompareTypeFlags comparePlaceholderToBuffer(
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
 		const bool &isLittleEndian,
-		const void* const numericBuffer,
-		const void* const asciiBuffer,
-		const void* const wideBuffer,
 		const void* const target);
 	static const CompareTypeFlags compareStructureToBuffer(
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
 		const bool &isLittleEndian,
-		const void* const numericBuffer,
-		const void* const asciiBuffer,
-		const void* const wideBuffer,
 		const void* const target);
 	static const CompareTypeFlags compareAsciiStringToBuffer(
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
 		const bool &isLittleEndian,
-		const void* const numericBuffer,
-		const void* const asciiBuffer,
-		const void* const wideBuffer,
 		const void* const target);
 	static const CompareTypeFlags compareWideStringToBuffer(
 		const ScanVariant* const obj,
 		const ScanVariantComparator &comparator,
 		const size_t &valueSize,
 		const bool &isLittleEndian,
-		const void* const numericBuffer,
-		const void* const asciiBuffer,
-		const void* const wideBuffer,
 		const void* const target);
 
 	void setSizeAndValue();
