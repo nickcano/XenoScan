@@ -57,9 +57,9 @@ public:
 	void runDataStructureScan(const ScannerTargetShPtr &target, const std::string &type);
 	
 private:
-	typedef IRangeList<ScanVariant::ScanVariantType> IScanVariantTypeRange;
-	typedef RangeList<ScanVariant::ScanVariantType> ScanVariantTypeRange;
-	typedef RangeListAggregate<ScanVariant::ScanVariantType> ScanVariantTypeRangeAggregate;
+	typedef IRangeList<typename ScanVariant::ScanVariantType> IScanVariantTypeRange;
+	typedef RangeList<typename ScanVariant::ScanVariantType> ScanVariantTypeRange;
+	typedef RangeListAggregate<typename ScanVariant::ScanVariantType> ScanVariantTypeRangeAggregate;
 	ScanVariantTypeRange inferCrosswalkStrings;
 	ScanVariantTypeRange inferCrosswalkNumbers;
 	ScanVariantTypeRangeAggregate inferCrosswalkAll;
