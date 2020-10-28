@@ -8,6 +8,8 @@
 #include <Windows.h>
 #include <Psapi.h>
 
+#include <tlhelp32.h>
+
 #define WIN32_IS_EXECUTABLE_PROT(x) (x == PAGE_EXECUTE || x == PAGE_EXECUTE_READ || x == PAGE_EXECUTE_READWRITE || x == PAGE_EXECUTE_WRITECOPY)
 #define WIN32_IS_WRITEABLE_PROT(x) (x == PAGE_EXECUTE_READWRITE || x == PAGE_READWRITE)
 
@@ -57,18 +59,11 @@ bool ScannerTargetWindows::attach(const ProcessIdentifier &pid)
 	if (!handle)
 		return false;
 
+	this->pid = pid;
 	this->processHandle = reinterpret_cast<ProcessHandle>(handle);
 
 	// find the main module bounds
-	mainModuleStart = this->getMainModuleBaseAddress();
-	if (mainModuleStart == 0)
-		return false;
-
-	MODULEINFO moduleInfo;
-	if (!GetModuleInformation(this->processHandle, (HMODULE)mainModuleStart, &moduleInfo, sizeof(moduleInfo)))
-		return false;
-
-	mainModuleEnd = (MemoryAddress)((size_t)mainModuleStart + moduleInfo.SizeOfImage);
+	this->buildModuleBounds();
 
 	// find the system info
 	SYSTEM_INFO sysinfo;
@@ -109,6 +104,7 @@ bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformati
 	meminfo.allocationBase = memoryInfo.BaseAddress;
 	meminfo.allocationSize = memoryInfo.RegionSize;
 	meminfo.allocationEnd = (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize);
+	meminfo.isModule = this->isWithinModule(meminfo.allocationBase, meminfo.allocationEnd);
 
 	meminfo.isExecutable = WIN32_IS_EXECUTABLE_PROT(memoryInfo.Protect);
 	meminfo.isWriteable = WIN32_IS_WRITEABLE_PROT(memoryInfo.Protect);
@@ -117,10 +113,15 @@ bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformati
 	return true;
 }
 
+bool ScannerTargetWindows::isWithinModule(MemoryAddress &start, MemoryAddress &end) const
+{
+	return this->moduleBounds.contains(start, end);
+}
+
 bool ScannerTargetWindows::getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const
 {
-	start = mainModuleStart;
-	end = mainModuleEnd;
+	start = this->mainModuleStart;
+	end = this->mainModuleEnd;
 	return true;
 }
 
@@ -152,28 +153,35 @@ bool ScannerTargetWindows::rawWrite(const MemoryAddress &adr, const size_t objec
 	return (WriteProcessMemory(this->processHandle, adr, data, objectSize, NULL) != 0);
 }
 
-MemoryAddress ScannerTargetWindows::getMainModuleBaseAddress() const
+void ScannerTargetWindows::buildModuleBounds()
 {
-	// get the address of kernel32.dll
-	HMODULE k32 = GetModuleHandleA("kernel32.dll");
+	// WARNING: not thread safe for any updated members
+	this->moduleBounds.clear();
 
-	// get the address of GetModuleHandle()
-	LPVOID funcAdr = GetProcAddress(k32, "GetModuleHandleA");
-	if (!funcAdr)
-		funcAdr = GetProcAddress(k32, "GetModuleHandleW");
+	auto type = (sizeof(MemoryAddress) == 4)
+		? TH32CS_SNAPMODULE // if we're 32bit, just query "native modules"
+		: (TH32CS_SNAPMODULE32 | TH32CS_SNAPMODULE); // if we're 64bit, make sure to grab both 64bit ("native") and 32bit modules
 
-	// create the thread
-	HANDLE thread = CreateRemoteThread(this->processHandle, NULL, NULL, (LPTHREAD_START_ROUTINE)funcAdr, NULL, NULL, NULL);
+	MODULEENTRY32W entry;
+	entry.dwSize = sizeof(MODULEENTRY32W);
 
-	// let the thread finish
-	WaitForSingleObject(thread, INFINITE);
+	auto snapshot = CreateToolhelp32Snapshot(type, this->pid);
+	if (Module32FirstW(snapshot, &entry) == TRUE)
+	{
+		// currently treating the first module as the main module.
+		// havent yet validated that this assumption is always true.
+		this->mainModuleStart = reinterpret_cast<MemoryAddress>(entry.modBaseAddr);
+		this->mainModuleEnd = reinterpret_cast<MemoryAddress>(&entry.modBaseAddr[entry.modBaseSize]);
 
-	// get the exit code
-	MemoryAddress baseAddress;
-	GetExitCodeThread(thread, (LPDWORD)&baseAddress);
-
-	// clean up the thread handle
-	CloseHandle(thread);
-
-	return baseAddress;
+		do
+		{
+			//wprintf(L"%s\n\t%s\n", entry.szExePath, entry.szModule);
+			this->moduleBounds.insert(
+				reinterpret_cast<MemoryAddress>(entry.modBaseAddr),
+				reinterpret_cast<MemoryAddress>(&entry.modBaseAddr[entry.modBaseSize])
+			);
+		}
+		while (Module32NextW(snapshot, &entry) == TRUE);
+	}
+	CloseHandle(snapshot);
 }

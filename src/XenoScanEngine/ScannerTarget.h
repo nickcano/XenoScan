@@ -19,6 +19,8 @@ public:
 	virtual bool isAttached() const = 0;
 
 	virtual bool queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const = 0;
+	
+	virtual bool isWithinModule(MemoryAddress &start, MemoryAddress &end) const = 0;
 	virtual bool getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const = 0;
 
 	virtual uint64_t getFileTime64() const = 0;

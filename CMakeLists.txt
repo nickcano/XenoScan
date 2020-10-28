@@ -14,6 +14,11 @@ foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
 endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 
+if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
+    add_definitions(-DWIN64)
+endif()
+
+
 # set up deps and linkers and include stuff
 include_directories ("src")
 

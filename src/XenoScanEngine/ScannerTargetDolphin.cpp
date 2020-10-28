@@ -109,6 +109,7 @@ bool ScannerTargetDolphin::queryMemory(const MemoryAddress &adr, MemoryInformati
 	// now let's set up everything and return
 	if (retView != this->views.cend())
 	{
+		meminfo.isModule = false;
 		meminfo.isCommitted = true;
 		meminfo.isMirror = retView->details.isMirror;
 		meminfo.allocationBase = retView->details.logicalBase;
@@ -123,6 +124,11 @@ bool ScannerTargetDolphin::queryMemory(const MemoryAddress &adr, MemoryInformati
 	}
 
 	nextAdr = this->highestAddress;
+	return false;
+}
+
+bool ScannerTargetDolphin::isWithinModule(MemoryAddress &start, MemoryAddress &end) const
+{
 	return false;
 }
 

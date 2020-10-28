@@ -63,6 +63,7 @@ file(GLOB SCANNER_BLUEPRINT_SOURCE_FILES
 
 file(GLOB HEADER_FILES
     "Assert.h"
+    "BoundingList.h"
     "FastAllocator.h"
     "KeyedFactory.h"
 	"StackJobPool.h"

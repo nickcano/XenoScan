@@ -6,9 +6,10 @@
 
 
 // This file is include guarded because we want to ignore it on non-Windows systems.
-// CMake will stop the compiler form seeing it, but it wont stop inclusion.
+// CMake will stop the compiler from seeing it, but it wont stop inclusion.
 #ifdef WIN32 
 #include "ScannerTarget.h"
+
 
 // We define NativeScannerTarget as ScannerTargetWindows so that the
 // factory will use this class for native processes
@@ -30,6 +31,8 @@ public:
 	virtual bool isAttached() const;
 
 	virtual bool queryMemory(const MemoryAddress &adr, MemoryInformation& meminfo, MemoryAddress &nextAdr) const;
+	
+	virtual bool isWithinModule(MemoryAddress &start, MemoryAddress &end) const;
 	virtual bool getMainModuleBounds(MemoryAddress &start, MemoryAddress &end) const;
 
 	virtual uint64_t getFileTime64() const;
@@ -40,11 +43,13 @@ protected:
 	virtual bool rawWrite(const MemoryAddress &adr, const size_t objectSize, const void* const data) const;
 
 private:
+	ProcessIdentifier pid;
 	ProcessHandle processHandle;
+	MemoryAddressBounds moduleBounds;
 	MemoryAddress mainModuleStart, mainModuleEnd;
 	size_t pageSize;
 
-	MemoryAddress getMainModuleBaseAddress() const;
+	void buildModuleBounds();
 };
 
 #endif

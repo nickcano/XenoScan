@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <vector>
 
+#include "BoundingList.h"
+
 typedef void* MemoryAddress;
 typedef uint32_t ProcessIdentifier;
 typedef void* ProcessHandle;
@@ -12,12 +14,24 @@ typedef uint32_t CompareTypeFlags;
 
 struct MemoryInformation
 {
-	bool isCommitted, isWriteable, isExecutable, isMirror;
+	bool isModule, isCommitted, isWriteable, isExecutable, isMirror;
 	MemoryAddress allocationBase, allocationEnd;
 	size_t allocationSize;
 };
 
 typedef std::vector<MemoryInformation> MemoryInformationCollection;
+
+
+struct MemoryAddressBoundsComparator
+{
+	typedef std::tuple<MemoryAddress, MemoryAddress> Range;
+	static bool CompareBounds(const Range& a, const Range& b)
+	{
+		return (std::get<0>(a) < std::get<0>(b) && std::get<1>(a) < std::get<1>(b));
+	}
+};
+
+typedef BoundingList<MemoryAddress, MemoryAddressBoundsComparator> MemoryAddressBounds;
 
 
 // this represents an entire block of logically mapped memory
