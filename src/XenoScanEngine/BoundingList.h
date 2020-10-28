@@ -28,7 +28,7 @@ public:
 			// overlapping", so we coalesce these into a single block and keep the
 			// newest data.
 			auto lowest = std::min(std::get<0>(target), std::get<0>(*lower));
-			auto highest = std::max(std::get<1>(target), std::get<0>(*lower));
+			auto highest = std::max(std::get<1>(target), std::get<1>(*lower));
 			*lower = std::make_tuple(lowest, highest);
 			return false;
 		}
