@@ -4,6 +4,7 @@ ipch/*
 /ipch/
 tempfiles/*
 /tempfiles/
+/build/
 *.exe
 *.opensdf
 *.suo

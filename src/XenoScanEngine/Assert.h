@@ -2,6 +2,6 @@
 
 #define ASSERT(x) do { \
 if (!(x)) {	\
-	__asm { int 3 } \
+	__debugbreak(); \
 } \
 } while (0, 0);
