@@ -68,6 +68,11 @@ void Scanner::runDataStructureScan(const ScannerTargetShPtr &target, const std::
 	this->doDataStructureScan(target, type);
 }
 
+bool Scanner::shouldScanBlock(const MemoryInformation& meminfo) const
+{
+	return (meminfo.isCommitted && !meminfo.isMirror);
+}
+
 MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr &target) const
 {
 	auto startAddress = target->getLowestAddress();
@@ -80,7 +85,7 @@ MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr
 	{
 		MemoryInformation meminfo;
 		if (target->queryMemory(nextAddress, meminfo, nextAddress))
-			if (meminfo.isCommitted && !meminfo.isMirror)
+			if (this->shouldScanBlock(meminfo))
 				blocks.push_back(meminfo);
 	}
 

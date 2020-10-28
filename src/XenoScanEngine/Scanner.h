@@ -56,6 +56,10 @@ public:
 	void runScan(const ScannerTargetShPtr &target, const ScanVariant &needle, const CompareTypeFlags &comp, const ScanInferType &type);
 	void runDataStructureScan(const ScannerTargetShPtr &target, const std::string &type);
 	
+protected:
+	virtual bool shouldScanBlock(const MemoryInformation& meminfo) const;
+
+
 private:
 	typedef IRangeList<typename ScanVariant::ScanVariantType> IScanVariantTypeRange;
 	typedef RangeList<typename ScanVariant::ScanVariantType> ScanVariantTypeRange;

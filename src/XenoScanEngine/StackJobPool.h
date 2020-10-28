@@ -11,6 +11,8 @@
 #include <chrono>
 #include <stack>
 
+// TODO: make this whole thing use condition variables
+// so it's not crap
 template<typename JOB_DETAIL_TYPE>
 class StackJobPool
 {
