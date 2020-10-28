@@ -91,6 +91,7 @@ bool LuaPrimitive::executeFunction(const std::string& name, const std::vector<Lu
 	for (auto iarg = arguments.begin(); iarg != arguments.end(); iarg++)
 		iarg->push(this->L);
 
+#pragma warning( suppress : 4244 )
 	if (lua_pcall(this->L, arguments.size(), returns, 0))
 	{
 		this->collectErrors(false);

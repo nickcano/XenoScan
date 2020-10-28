@@ -130,6 +130,7 @@ const ScanVariant ScanVariant::FromMemoryAddress(const MemoryAddress& valueMemor
 	ScanVariant v;
 	if (sizeof(MemoryAddress) == sizeof(uint32_t))
 	{
+#pragma warning( suppress : 4311 4302 )
 		v.valueuint32 = reinterpret_cast<uint32_t>(valueMemoryAddress);
 		v.type = SCAN_VARIANT_UINT32;
 		v.setSizeAndValue();

@@ -288,90 +288,105 @@ public:
 	bool getAsInt(uint8_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsInt(int8_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsInt(uint16_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsInt(int16_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsInt(uint32_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsInt(int32_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsInt(uint64_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsInt(int64_t &value) const
 	{
 		if (this->type != LUA_VARIANT_INT) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsPointer(LuaVariantPointer &value) const
 	{
 		if (this->type != LUA_VARIANT_POINTER) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valuePointer;
 		return true;
 	}
 	bool getAsString(LuaVariantString &value) const
 	{
 		if (this->type != LUA_VARIANT_STRING) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueString;
 		return true;
 	}
 	bool getAsBool(LuaVariantBool &value) const
 	{
 		if (this->type != LUA_VARIANT_BOOL) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueBool;
 		return true;
 	}
 	bool getAsFunction(LuaVariantFunction &value) const
 	{
 		if (this->type != LUA_VARIANT_FUNCTION) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueFunction;
 		return true;
 	}
 	bool getAsFunctionRef(LuaVariantInt &value) const
 	{
 		if (this->type != LUA_VARIANT_FUNCTION_REF) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueInt;
 		return true;
 	}
 	bool getAsITable(LuaVariantITable &value) const
 	{
 		if (this->type != LUA_VARIANT_ITABLE) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueITable;
 		return true;
 	}
 	bool getAsKTable(LuaVariantKTable &value) const
 	{
 		if (this->type != LUA_VARIANT_KTABLE) return false;
+#pragma warning( suppress : 4244 )
 		value = this->valueKTable;
 		return true;
 	}

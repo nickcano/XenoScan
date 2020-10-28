@@ -26,13 +26,13 @@ public:
 			this->firstResults = results;
 			this->lastResults = this->firstResults;
 
-			printf("%d initial matches found\n", this->lastResults.size());
+			printf("%zu initial matches found\n", this->lastResults.size());
 		}
 		else
 		{
 			auto oldSize = this->lastResults.size();
 			this->lastResults = results;
-			printf("Narrowed results from %d to %d\n", oldSize, this->lastResults.size());
+			printf("Narrowed results from %zu to %zu\n", oldSize, this->lastResults.size());
 		}
 
 		// TODO: remove print
