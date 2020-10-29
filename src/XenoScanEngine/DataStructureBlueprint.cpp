@@ -4,7 +4,9 @@
 #include "StdMapBlueprint.h"
 #include "NativeClassInstanceBlueprint.h"
 
-#include "StackJobPool.h"
+#include "ThreadPool.h"
+#include "ConsoleProgressTracker.h"
+
 
 /*
 	The job of the code in this file is to detect different
@@ -47,25 +49,29 @@ void DataStructureBlueprint::findMatches(
 	const PointerMap &pointerMap,
 	DataStructureResultMap& results)
 {
+	ThreadPool pool;
 	std::mutex mutex;
-	StackJobPool<const PointerMap::value_type*> pool;
+	ConsoleProgressTracker tracker(
+		"Pointer Tree",
+		pool.getNumberOfWorkers(),
+		pointerMap.size(),
+		(pointerMap.size() / 100) + 1
+	);
 
-	pool.spinup(pointerMap.size(), "Pointer Tree",
-		[this, &pointerMap, &target, &results, &mutex](const PointerMap::value_type* ptr) -> void
-		{
+	for (auto ptrItr = pointerMap.cbegin(); ptrItr != pointerMap.cend(); ptrItr++)
+	{
+		pool.execute([this, &pointerMap, &target, &results, &mutex, &ptrItr]() -> void {
 			DataStructureDetails details;
-			if (this->walkStructure(target, ptr->first, pointerMap, details))
+			if (this->walkStructure(target, ptrItr->first, pointerMap, details))
 			{
 				mutex.lock();
 				results[this->getTypeName()][details.identifier] = details;
 				mutex.unlock();
 			}
-		}
-	);
+		});
+	}
 
-
-	for (auto ptrItr = pointerMap.cbegin(); ptrItr != pointerMap.cend(); ptrItr++)
-		pool.addJob(&(*ptrItr));
-
-	pool.waitForCompletion();
+	pool.join([&pointerMap, &tracker](size_t remaining) -> void {
+		tracker.setNumberOfCompleteTasks(pointerMap.size() - remaining);
+	});
 }

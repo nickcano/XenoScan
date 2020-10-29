@@ -66,11 +66,15 @@ file(GLOB HEADER_FILES
     "BoundingList.h"
     "FastAllocator.h"
     "KeyedFactory.h"
-	"StackJobPool.h"
 	"RangeList.h"
+	"ThreadPool.h"
+	"ThreadPoolWorker.h"
+	"ConsoleProgressTracker.h"
 )
 file(GLOB SOURCE_FILES
     "FastAllocator.cpp"
+    "ThreadPool.cpp"
+	"ThreadPoolWorker.cpp"
 )
 
 if (MSVC)

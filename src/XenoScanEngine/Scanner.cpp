@@ -2,8 +2,9 @@
 #include "ScannerTarget.h"
 #include "DataStructureBlueprint.h"
 #include "Assert.h"
-#include "StackJobPool.h"
 
+#include "ThreadPool.h"
+#include "ConsoleProgressTracker.h"
 
 #include <mutex>
 
@@ -109,52 +110,45 @@ void Scanner::calculateBoundsOfBlocks(const ScannerTargetShPtr &target, const Me
 
 void Scanner::iterateOverBlocks(const ScannerTargetShPtr &target, const MemoryInformationCollection &blocks, blockIterationCallback callback) const
 {
-	struct QueuedBlock
-	{
-		size_t size;
-		uint8_t* buffer;
-		MemoryAddress baseAddress;
-	};
-
-	StackJobPool<QueuedBlock> pool;
-	pool.spinup(blocks.size(), "Block",
-		[&callback](QueuedBlock& details) -> void
-		{
-			callback(details.baseAddress, details.buffer, details.size);
-			delete[] details.buffer;
-			details.buffer = nullptr;
-		}
+	ThreadPool pool;
+	ConsoleProgressTracker tracker(
+		"Block",
+		pool.getNumberOfWorkers(),
+		blocks.size(),
+		(blocks.size() / 100) + 1
 	);
 
 	for (auto block = blocks.cbegin(); block != blocks.cend(); block++)
 	{
-		// queue up this block for scanning
-		auto buffer = new uint8_t[block->allocationSize];
-		while (!buffer)
-		{
-			// we're probably hogging  too much memory, give threads some time to spin
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			buffer = new uint8_t[block->allocationSize];
-		}
+		pool.execute([&target, &callback, block]() -> void {
+			// allocate memory to read the buffer
+			auto buffer = new uint8_t[block->allocationSize];
+			while (!buffer)
+			{
+				// we're probably hogging  too much memory, give threads some time to spin
+				std::this_thread::sleep_for(std::chrono::milliseconds(5));
+				buffer = new uint8_t[block->allocationSize];
+			}
 
-		QueuedBlock qb;
-		qb.buffer = buffer;
-		qb.size = block->allocationSize;
-		qb.baseAddress = block->allocationBase;
+			// read the buffer
+			if (!target->readArray<uint8_t>(block->allocationBase, block->allocationSize, buffer))
+			{
+				// failures will typically happen when target isn't frozen, as it's
+				// memory allocations will change between the start and end of the scan.
+				// these are treated as non-fatal and somewhat expected
+				delete[] buffer;
+				return;
+			}
 
-		if (!target->readArray<uint8_t>(qb.baseAddress, qb.size, qb.buffer))
-		{
-			// failures will typically happen when target isn't frozen, as it's
-			// memory allocations will change between the start and end of the scan
-			delete[] qb.buffer;
-			pool.incrementCompletionCount();
-			continue;
-		}
-
-		pool.addJob(qb);
+			// scan
+			callback(block->allocationBase, buffer, block->allocationSize);
+			delete[] buffer;
+		});
 	}
 
-	pool.waitForCompletion();
+	pool.join([&blocks, &tracker](size_t remaining) -> void {
+		tracker.setNumberOfCompleteTasks(blocks.size() - remaining);
+	});
 }
 
 void Scanner::doScan(const ScannerTargetShPtr &target, const ScanResultCollection &needles, const CompareTypeFlags &compType)
