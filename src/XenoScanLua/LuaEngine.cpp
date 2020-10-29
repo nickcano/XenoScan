@@ -27,6 +27,24 @@ void LuaEngine::doThink()
 	}
 }
 
+LuaVariant LuaEngine::createLuaMemoryInformation(const MemoryInformation& meminfo) const
+{
+	LuaVariant::LuaVariantKTable info;
+
+	info["start"] = LuaVariant((LuaVariant::LuaVariantPointer)meminfo.allocationBase);
+	info["end"] = LuaVariant((LuaVariant::LuaVariantPointer)meminfo.allocationEnd);
+	info["size"] = LuaVariant((LuaVariant::LuaVariantInt)meminfo.allocationSize);
+
+	info["isModule"] = meminfo.isModule;
+	info["isCommitted"] = meminfo.isCommitted;
+	info["isMirror"] = meminfo.isMirror;
+	info["isWriteable"] = meminfo.isWriteable;
+	info["isExecutable"] = meminfo.isExecutable;
+	info["isMappedImage"] = meminfo.isMappedImage;
+	info["isMapped"] = meminfo.isMapped;
+	return info;
+}
+
 LuaVariant LuaEngine::createLuaObject(const std::string& typeName, const void* pointer) const
 {
 	LuaVariant::LuaVariantKTable target;
@@ -59,6 +77,7 @@ bool LuaEngine::getScannerPair(const LuaVariant& object, ScannerPairList::const_
 	void* objectPointer;
 	if (!this->getLuaObject(object, "ScannerPair", objectPointer)) return false;
 
+	// TODO: put into a map keyed on pointer 
 	for (auto isearch = this->scanners.cbegin(); isearch != this->scanners.cend(); isearch++)
 	{
 		if ((void*)(*isearch).get() == objectPointer)

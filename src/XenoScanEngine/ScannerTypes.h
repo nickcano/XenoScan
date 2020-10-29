@@ -14,7 +14,11 @@ typedef uint32_t CompareTypeFlags;
 
 struct MemoryInformation
 {
-	bool isModule, isCommitted, isWriteable, isExecutable, isMirror;
+	bool isModule;
+	bool isCommitted, isMirror;
+	bool isWriteable, isExecutable;
+	bool isMappedImage, isMapped;
+
 	MemoryAddress allocationBase, allocationEnd;
 	size_t allocationSize;
 };

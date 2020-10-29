@@ -44,6 +44,7 @@ public:
 	int readMemory();
 	int writeMemory();
 
+	int setBlockChecker();
 	int newScan();
 	int runScan();
 	int getScanResultsSize();
@@ -58,10 +59,11 @@ protected:
 	}
 
 private:
-	struct ScannerPair
+	struct ScannerPair // TODO: fix naming for this
 	{
 		ScannerTargetShPtr target;
 		ScannerShPtr scanner;
+		LuaVariant blockChecker;
 	};
 	typedef std::shared_ptr<ScannerPair> ScannerPairShPtr;
 	typedef std::list<ScannerPairShPtr> ScannerPairList;
@@ -74,9 +76,12 @@ private:
 	};
 	std::list<TimedEvent> timedEvents;
 
+	LuaVariant createLuaMemoryInformation(const MemoryInformation& meminfo) const;
+
 	LuaVariant createLuaObject(const std::string& typeName, const void* pointer) const;
 	bool getLuaObject(const LuaVariant& object, const std::string& typeName, void* &pointer) const;
 	bool getScannerPair(const LuaVariant& object, ScannerPairList::const_iterator &iterator) const;
+
 
 	ScannerPairShPtr getArgAsScannerObject(const std::vector<LuaVariant>& args) const;
 

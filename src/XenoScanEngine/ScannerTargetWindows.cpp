@@ -98,13 +98,15 @@ bool ScannerTargetWindows::queryMemory(const MemoryAddress &adr, MemoryInformati
 		nextAdr = (MemoryAddress)((size_t)adr + this->pageSize);
 		return false;
 	}
-
+	
 	meminfo.isMirror = false;
-	meminfo.isCommitted = (memoryInfo.State == MEM_COMMIT);
+	meminfo.isCommitted =    (memoryInfo.State == MEM_COMMIT);
 	meminfo.allocationBase = memoryInfo.BaseAddress;
 	meminfo.allocationSize = memoryInfo.RegionSize;
-	meminfo.allocationEnd = (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize);
-	meminfo.isModule = this->isWithinModule(meminfo.allocationBase, meminfo.allocationEnd);
+	meminfo.allocationEnd =  (MemoryAddress)((size_t)meminfo.allocationBase + meminfo.allocationSize);
+	meminfo.isModule =       this->isWithinModule(meminfo.allocationBase, meminfo.allocationEnd);
+	meminfo.isMappedImage =  (memoryInfo.Type == MEM_IMAGE);
+	meminfo.isMapped =       (memoryInfo.Type == MEM_MAPPED);
 
 	meminfo.isExecutable = WIN32_IS_EXECUTABLE_PROT(memoryInfo.Protect);
 	meminfo.isWriteable = WIN32_IS_WRITEABLE_PROT(memoryInfo.Protect);

@@ -109,7 +109,7 @@ bool LuaPrimitive::executeFunction(const LuaVariant& function, const std::vector
 	function.push(this->L);
 
 	// make a copy since our ref will be invalidated
-	newFunction = LuaVariant::parse(this->L, 1);
+	newFunction = LuaVariant::parse(this->L, -1);
 
 	// push args
 	for (auto iarg = arguments.begin(); iarg != arguments.end(); iarg++)

@@ -110,6 +110,8 @@ bool ScannerTargetDolphin::queryMemory(const MemoryAddress &adr, MemoryInformati
 	if (retView != this->views.cend())
 	{
 		meminfo.isModule = false;
+		meminfo.isMapped = false;
+		meminfo.isMappedImage = false;
 		meminfo.isCommitted = true;
 		meminfo.isMirror = retView->details.isMirror;
 		meminfo.allocationBase = retView->details.logicalBase;

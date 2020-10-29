@@ -47,18 +47,18 @@ public:
 		SCAN_COMPARE_END = SCAN_COMPARE_LESS_THAN_OR_EQUALS
 	};
 
+	typedef std::function<bool(bool, const MemoryInformation&)> ScannableBlockChecker;
+
 	ScanStateShPtr scanState;
 
 	Scanner();
 	~Scanner();
 
+	void setBlockChecker(const ScannableBlockChecker& checker);
+
 	void startNewScan();
 	void runScan(const ScannerTargetShPtr &target, const ScanVariant &needle, const CompareTypeFlags &comp, const ScanInferType &type);
 	void runDataStructureScan(const ScannerTargetShPtr &target, const std::string &type);
-	
-protected:
-	virtual bool shouldScanBlock(const MemoryInformation& meminfo) const;
-
 
 private:
 	typedef IRangeList<typename ScanVariant::ScanVariantType> IScanVariantTypeRange;
@@ -68,7 +68,9 @@ private:
 	ScanVariantTypeRange inferCrosswalkNumbers;
 	ScanVariantTypeRangeAggregate inferCrosswalkAll;
 	IScanVariantTypeRange* inferTypeCrosswalk[SCAN_INFER_TYPE_END + 1];
+	ScannableBlockChecker blockChecker;
 
+	bool shouldScanBlock(const MemoryInformation& meminfo) const;
 	MemoryInformationCollection getScannableBlocks(const ScannerTargetShPtr &target) const;
 
 	typedef std::function<void(const MemoryAddress &baseAddress, const uint8_t* chunk, const size_t &chunkSize)> blockIterationCallback;

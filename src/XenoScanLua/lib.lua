@@ -80,6 +80,11 @@ function Process:destroy()
 	self = nil
 end
 
+function Process:setBlockChecker(func)
+	local this = type(self) == 'table' and self or Process.new(self)
+	return setBlockChecker(this.__nativeObject, func)
+end
+
 function Process:newScan()
 	local this = type(self) == 'table' and self or Process.new(self)
 

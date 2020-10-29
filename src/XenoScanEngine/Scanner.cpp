@@ -8,7 +8,7 @@
 
 #include <mutex>
 
-Scanner::Scanner() : scanState(nullptr)
+Scanner::Scanner() : scanState(nullptr), blockChecker(nullptr)
 {
 	this->inferCrosswalkStrings = ScanVariantTypeRange(ScanVariant::SCAN_VARIANT_STRINGTYPES_BEGIN, ScanVariant::SCAN_VARIANT_STRINGTYPES_END);
 	this->inferCrosswalkNumbers = ScanVariantTypeRange(ScanVariant::SCAN_VARIANT_NUMERICTYPES_INFERABLE_BEGIN, ScanVariant::SCAN_VARIANT_NUMERICTYPES_INFERABLE_END);
@@ -23,6 +23,11 @@ Scanner::Scanner() : scanState(nullptr)
 }
 Scanner::~Scanner()
 {
+}
+
+void Scanner::setBlockChecker(const ScannableBlockChecker& checker)
+{
+	this->blockChecker = checker;
 }
 
 void Scanner::startNewScan()
@@ -71,7 +76,11 @@ void Scanner::runDataStructureScan(const ScannerTargetShPtr &target, const std::
 
 bool Scanner::shouldScanBlock(const MemoryInformation& meminfo) const
 {
-	return (meminfo.isCommitted && !meminfo.isMirror);
+	// TODO: should ignoring commit/mirror be target-implementation defined?
+	auto shouldScan = (meminfo.isCommitted && !meminfo.isMirror);
+	if (this->blockChecker)
+		shouldScan = this->blockChecker(shouldScan, meminfo);
+	return shouldScan;
 }
 
 MemoryInformationCollection Scanner::getScannableBlocks(const ScannerTargetShPtr &target) const

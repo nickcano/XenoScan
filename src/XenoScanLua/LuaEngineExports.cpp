@@ -167,6 +167,32 @@ int LuaEngine::writeMemory()
 	return this->luaRet(writeVariant.writeToTarget(scanner->target, address));
 }
 
+LUAENGINE_EXPORT_FUNCTION(setBlockChecker, "setBlockChecker");
+int LuaEngine::setBlockChecker()
+{
+	auto args = this->getArguments<LUA_VARIANT_KTABLE, LUA_VARIANT_FUNCTION_REF>();
+	auto scanner = this->getArgAsScannerObject(args);
+	if (!scanner.get()) return this->luaRet(false);
+	
+	scanner->blockChecker = args[1];
+	scanner->scanner->setBlockChecker([this, scanner](bool def, const MemoryInformation& meminfo) -> bool {
+		auto args =
+		{
+			LuaVariant(def),
+			this->createLuaMemoryInformation(meminfo)
+		};
+		if (!this->executeFunction(scanner->blockChecker, args, 1, scanner->blockChecker))
+			return def; // error occured, return default behavior
+
+		auto result = LuaVariant::parse(this->L, -1);
+		lua_pop(this->L, 1);
+		bool ret;
+		if (!result.getAsBool(ret))
+			return def; // bad return type, return default behavior
+		return ret;
+	});
+	return this->luaRet(true);
+}
 
 LUAENGINE_EXPORT_FUNCTION(newScan, "newScan");
 int LuaEngine::newScan()
